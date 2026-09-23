@@ -67,6 +67,24 @@ See [environment.md](./environment.md). In short: everything lives on Render;
 Vercel needs nothing; `CORS_ORIGINS` must name the Vercel URL, and
 `VITE_API_BASE_URL` must stay unset.
 
+## Two things the free tier makes manual
+
+**Dev dependencies at build time.** Render applies environment variables
+during the build, so `NODE_ENV=production` makes npm skip devDependencies —
+including the TypeScript compiler. The build command is
+`npm ci --include=dev && npm run build` for that reason. Changing it back to
+`npm install` breaks the build with `TS2688: Cannot find type definition file
+for 'node'`.
+
+**Migrations.** Render's Pre-Deploy Command, which would normally run them, is
+a paid feature. So after any schema change, apply it from your machine
+*before* the new code goes out, so the database is never behind the app:
+
+```powershell
+$env:DATABASE_URL = "<the session pooler URI>"
+npm --prefix backend run db:migrate
+```
+
 ## Rolling back
 
 **Vercel** — promote a previous deployment from the dashboard. Instant.

@@ -167,7 +167,7 @@ all of which fail only in production:
       | Branch | `main` |
       | **Root Directory** | `backend` |
       | Runtime | Node |
-      | Build Command | `npm install && npm run build` |
+      | Build Command | `npm ci --include=dev && npm run build` |
       | Start Command | `npm start` |
       | Instance Type | Free |
 
@@ -176,6 +176,21 @@ all of which fail only in production:
       building, and fails.
 
 Node version comes from `backend/.node-version`, so there is nothing to set.
+
+**`--include=dev` is load-bearing.** Render applies the service's environment
+variables during the build as well as at runtime, and `NODE_ENV=production`
+makes npm skip devDependencies — which is where `typescript` and
+`@types/node` live. A plain `npm install` therefore fetches 117 packages
+instead of 200 and the build dies with:
+
+```
+error TS2688: Cannot find type definition file for 'node'.
+```
+
+The compiler is a build-time tool, so it has to be a devDependency; the fix
+belongs in the install command, not in the dependency list. `npm ci` also uses
+the committed lockfile, which makes the build reproducible rather than
+resolving ranges afresh on every deploy.
 
 ### Step 2.3 — Environment variables
 
