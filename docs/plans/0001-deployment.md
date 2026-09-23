@@ -47,7 +47,7 @@ endpoints than against thirty.
 | 1. Database | 0 / 4 | Not started |
 | 2. API | 0 / 5 | Not started |
 | 3. Web | 0 / 5 | Not started |
-| 4. Keep awake | 0 / 2 | Not started |
+| 4. Keep awake | 0 / 2 | **Deferred** — see the note in phase 4 |
 
 Dashboard URLs move. If a link 404s, navigate from the product's dashboard
 home rather than assuming the step is wrong.
@@ -330,13 +330,23 @@ request cross-origin and breaks sign-in.
 - [ ] **Verify.** `gh run list --repo ELITES-ORG/ani --workflow "Keep awake"`
       shows a successful run.
 
-It is disabled until now on purpose: on a private repository each scheduled
-run bills a minimum of one minute, so pinging nothing every ten minutes would
-spend around 100 minutes a day of the free allowance.
+**Check the Render hours budget before enabling this.** Render grants 750 free
+instance hours per *workspace* per month, shared across every free web
+service, and exhausting them **suspends all of them until the next month**.
 
-Render still sleeps after 15 minutes idle outside the scheduled window. The
-only real fix is a paid instance — see
-[deployments](../reference/deployments.md).
+The workspace already runs Bilikha, whose own keep-awake holds it up about 17
+hours a day — roughly 510 hours a month. Adding Ani on the same schedule comes
+to about 1,020 against a budget of 750, and both would go dark around the
+22nd.
+
+So while Ani has no users, leave this phase undone. An idle free service
+consumes almost nothing, and cold starts cost nothing when nobody is waiting.
+Revisit when Ani has real traffic, at which point one of the two services
+should be on a paid instance regardless.
+
+The workflow is also disabled on the GitHub side: on a private repository each
+scheduled run bills a minimum of one minute, so pinging nothing every ten
+minutes would spend around 100 minutes a day of the Actions allowance.
 
 ---
 
@@ -347,7 +357,7 @@ only real fix is a paid instance — see
 - [ ] Register, reload, still signed in
 - [ ] A farm can register and shows as under review
 - [ ] Chrome on Android offers "Add to Home Screen"
-- [ ] One manual keep-awake run succeeds
+- [ ] Keep-awake deliberately left off, and the reason understood
 
 ## Follow-ups
 

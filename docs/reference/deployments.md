@@ -3,7 +3,7 @@
 | Service | Host | Free tier reality |
 |---|---|---|
 | PWA | Vercel | Generous. Not a constraint at this size |
-| API | Render | 750 instance-hours a month; **sleeps after 15 minutes idle**, ~1 minute to wake |
+| API | Render | 750 instance-hours a month **per workspace, shared across every free service**; **sleeps after 15 minutes idle**, ~1 minute to wake |
 | Database | Supabase | 500MB; **pauses after about a week with no activity**, but keeps the data |
 
 The step-by-step is [plan 0001](../plans/0001-deployment.md). This page is the
@@ -30,6 +30,17 @@ The Vercel rewrite in `frontend/vercel.json` maps `/api/:path*` to the Render
 service. That is what keeps the browser on a single origin, which is what
 makes the `sameSite=lax` session cookie work. Pointing the frontend directly
 at the Render hostname will break sign-in.
+
+## The hours budget is shared
+
+The 750 free instance hours belong to the Render **workspace**, not to a
+service, and running out **suspends every free service in the workspace**
+until the month rolls over.
+
+This workspace also hosts Bilikha. Two services each kept awake through the
+waking hours come to roughly 1,020 hours against a budget of 750, so both
+would be suspended before the month ended. Ani's keep-awake is therefore off
+until it has traffic worth protecting.
 
 ## Cold starts
 
