@@ -60,13 +60,35 @@ home rather than assuming the step is wrong.
 
 - [ ] **Action.** Go to **<https://supabase.com/dashboard/new>**.
       - Organisation: your own, or create `ELITES-ORG`
-      - Name: `ani`
+      - Name: `ani` — not the pre-filled "<your handle>'s Project"
       - Database password: generate one and **save it now** — Supabase shows
         it once and the connection string needs it
       - Region: **Southeast Asia (Singapore)**, the closest to Biliran
       - Plan: Free
+      - Security: **untick "Enable Data API"**. Leave "Enable automatic RLS"
+        unticked.
 - [ ] **Verify.** The project page reaches "Project is ready" (one to two
-      minutes).
+      minutes), and Settings → API does not offer a public REST URL for the
+      `public` schema.
+
+**Untick the Data API.** It is on by default, together with "Automatically
+expose new tables", and automatic RLS is off. That combination publishes every
+table Drizzle creates — including `users` with its `password_hash` column, and
+`sessions` — over HTTP to anyone holding the project's anon key, which is
+designed to be public. Supabase's own hint on that checkbox is warning about
+the same thing.
+
+Ani never uses PostgREST ([ADR 0005](../decisions/0005-supabase-is-the-database-not-the-backend.md)),
+so switching the whole surface off is better than trying to lock it down with
+policies we do not otherwise maintain.
+
+It costs nothing here. Drizzle connects directly on 5432, which is a different
+path, and Supabase Storage for [plan 0002](./0002-product-photos.md) is a
+separate service on its own endpoint. The toggle is reversible in
+Settings → API if that ever turns out to be wrong.
+
+Automatic RLS stays off because there is then nothing for a policy to protect,
+and the API connects as the table owner, which bypasses RLS anyway.
 
 ### Step 1.2 — Copy the session pooler connection string
 
