@@ -60,6 +60,27 @@ From `backend/`:
 
 ---
 
+## Looking at a screen
+
+`scripts/screenshot.mjs` drives headless Chrome over CDP. No dependency — it
+uses the Chrome already on the machine and Node's own WebSocket client.
+
+```bash
+node scripts/screenshot.mjs '{"url":"http://127.0.0.1:5173/","out":"shot.png","w":390,"h":844}'
+```
+
+| Key | Does |
+|---|---|
+| `seed` | Writes localStorage before first paint, then reloads |
+| `cookies` | Sets a session cookie, which is what makes a signed-in screen reachable |
+| `click` | Clicks a selector, waits, then shoots |
+| `evaluate` | Runs an expression after settle and prints it |
+
+Point it at a **local** server with a local account. A session cookie is a
+credential and this writes it to a scratch profile on disk.
+
+It does not replace looking at a real phone.
+
 ## Things that are not commands
 
 **Approving a vendor** is a SQL update until

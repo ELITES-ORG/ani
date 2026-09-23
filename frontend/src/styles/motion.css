@@ -1,0 +1,121 @@
+/**
+ * Motion.
+ *
+ * The brief: not flat, not static, and not heavy. Every animation here is
+ * transform or opacity only, under 250ms, and does nothing the app depends
+ * on — turn them all off and nothing breaks or disappears.
+ *
+ * There is no animation library. These are a few keyframes and a handful of
+ * transitions, which costs nothing in the bundle and keeps the main thread
+ * free on a phone that has very little of it.
+ */
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/**
+ * Page transition.
+ *
+ * Keyed on the route, so each navigation replays it. Deliberately a short
+ * rise rather than a horizontal slide: a slide implies a direction, and
+ * getting the direction wrong is more disorienting than no movement at all.
+ */
+.page-enter {
+  animation: rise 220ms var(--ease-out) both;
+}
+
+/**
+ * Staggered list entry.
+ *
+ * Capped at eight steps. Beyond that the last item waits long enough to feel
+ * like the app is slow, which is the opposite of the intent.
+ */
+.stagger > * {
+  animation: rise 220ms var(--ease-out) both;
+}
+.stagger > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.stagger > *:nth-child(2) {
+  animation-delay: 35ms;
+}
+.stagger > *:nth-child(3) {
+  animation-delay: 70ms;
+}
+.stagger > *:nth-child(4) {
+  animation-delay: 105ms;
+}
+.stagger > *:nth-child(5) {
+  animation-delay: 140ms;
+}
+.stagger > *:nth-child(6) {
+  animation-delay: 175ms;
+}
+.stagger > *:nth-child(7) {
+  animation-delay: 210ms;
+}
+.stagger > *:nth-child(n + 8) {
+  animation-delay: 240ms;
+}
+
+/**
+ * Press feedback.
+ *
+ * A pressed control must look pressed. On a slow connection this is often
+ * the only sign that a tap registered at all, which is the difference
+ * between waiting and tapping five more times.
+ */
+.pressable {
+  transition:
+    transform 120ms var(--ease-out),
+    background-color 120ms var(--ease-out),
+    border-color 120ms var(--ease-out),
+    opacity 120ms var(--ease-out);
+  touch-action: manipulation;
+}
+
+.pressable:active:not(:disabled) {
+  transform: scale(0.975);
+}
+
+/* Cards are larger, so they compress less or the whole row appears to jump. */
+.pressable-card:active {
+  transform: scale(0.99);
+}
+
+.spin {
+  animation: spin 700ms linear infinite;
+}

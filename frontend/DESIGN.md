@@ -1,106 +1,163 @@
 # Ani design system
 
-Read this before writing UI. It is not a style suggestion — the rules here
-exist because of who uses Ani and on what.
+Read this before writing UI. It is not a style guide with opinions in it —
+most of these rules exist because of who uses Ani and on what.
 
-The audience is holding a sub-₱5,000 Android phone, one-handed, often outdoors
-in daylight, on prepaid data they are counting. Every rule below follows from
-that. Background: [operating constraints](../docs/explanation/constraints.md).
+The person on the other end is holding a sub-₱5,000 Android phone, one-handed,
+often outdoors in daylight, on prepaid data they are counting, and they may
+never have filled in a web form before. Everything below follows from that.
+
+Background: [operating constraints](../docs/explanation/constraints.md).
+
+---
+
+## The one rule that outranks the rest
+
+**If a change makes a screen more elegant and less obvious, it is the wrong
+change.** ([ADR 0016](../docs/decisions/0016-the-interface-assumes-no-app-literacy.md))
 
 ---
 
 ## Tokens only
 
-Every colour, radius, and font comes from `src/styles/theme.css`. There are no
-exceptions, and a one-off is always a token that has not been added yet.
+Every colour, size, radius, shadow and easing comes from
+`src/styles/theme.css`. A one-off is always a token that has not been added
+yet.
 
 ```tsx
 // Good
 <div className="rounded-card border border-border bg-surface p-3">
 
-// Wrong
-<div className="rounded-[7px] border border-[#e2e8dd] bg-white p-3">
+// Wrong — raw colour, arbitrary radius
+<div className="rounded-[7px] border border-[#e1e6da] bg-white p-3">
 ```
 
-**Never interpolate a Tailwind class name.**
+**Never build a class name by interpolation.**
 
 ```tsx
 // Broken: the compiler cannot see this class, so the CSS is never generated
 <span className={`text-${tone}-700`}>
 
 // Correct: map to whole class names
-const TONE = { leaf: 'text-leaf-700', danger: 'text-danger-500' } as const;
+const TONE = { good: 'text-accent-700', bad: 'text-danger' } as const;
 <span className={TONE[tone]}>
 ```
 
+---
+
 ## Colour
+
+One accent, `#00b464`, and warm neutrals. The greys are tinted green rather
+than the usual cold slate, so they sit with the accent and with photographs of
+vegetables.
 
 | Token | Use |
 |---|---|
 | `canvas` | Page background |
 | `surface` | Cards, bars, inputs |
-| `border` | Every divider and outline |
+| `sunken` | Wells, skeletons, inactive chips |
+| `border` / `border-strong` | Dividers / input outlines |
 | `ink` | Primary text |
 | `ink-muted` | Secondary text, labels |
-| `ink-subtle` | Disabled, placeholder |
-| `leaf-700` | Primary action, active nav, price |
-| `leaf-100` / `leaf-50` | Status pills, pressed states |
-| `danger-500` / `danger-50` | Destructive actions and errors |
-| `soil-500` | Reserved for a second category accent |
+| `ink-subtle` | **Placeholders and disabled only.** Never body copy |
+| `accent-500` | The brand. **Fills only** |
+| `accent-700` / `accent-800` | Accent **text** on light backgrounds |
+| `accent-50` / `accent-100` | Tinted panels, active chip backgrounds |
+| `warn` / `warn-soft` | Waiting, under review |
+| `danger` / `danger-soft` | Destructive actions and errors |
 
-Greens carry meaning here — fresh, available, confirmed. Do not use `leaf` for
-a neutral surface, or the signal stops working.
+### The accent rule
 
-**Contrast.** `ink` on `canvas` and white on `leaf-700` both clear 4.5:1. This
-is read in sunlight; a mid-grey that looks refined on a desk monitor is
-illegible on a cheap LCD outdoors. Never put `ink-subtle` on anything a user
-must read.
+`#00b464` on white is **2.7:1**. It fails AA for text, and white on it fails
+equally. So:
+
+- **Green is a fill, never text on a light background.** Accent text uses
+  `accent-700`.
+- **Text on the green fill is near-black ink** (6.2:1), not white.
+
+That is why the primary button is vivid green with black text. It is the
+accessible choice and it is more legible in sunlight.
+([ADR 0015](../docs/decisions/0015-dark-ink-on-the-brand-green.md))
+
+**Colour never carries meaning alone.** Every status pill has a dot *and* a
+word. Roughly one man in twelve cannot separate red from green.
+
+---
 
 ## Type
 
-System font stack — no webfont. A font file is bytes a farmer pays for, to
-change the shape of letters.
+Figtree, self-hosted, one variable file covering 400–900
+([ADR 0018](../docs/decisions/0018-one-self-hosted-variable-font.md)).
 
 | Use | Classes |
 |---|---|
-| Page title | `text-lg font-semibold` |
-| Section heading | `text-sm font-medium text-ink-muted` |
+| Screen title | `text-2xl font-extrabold` |
+| Section heading | `text-lg font-bold` |
+| Quiet group label | `.eyebrow` (uppercase, tracked, muted) |
 | Body | `text-base` |
 | Secondary | `text-sm text-ink-muted` |
-| Caption | `text-xs text-ink-muted` |
+| Price | `tnum text-lg font-extrabold text-accent-800` |
 
-**Every input is `text-base`.** Anything smaller makes iOS Safari zoom the
-page when the field takes focus, and the user has to pinch back out.
+Weights carry the hierarchy, not sizes. There are six sizes on purpose — more
+steps means *less* hierarchy, not more.
+
+**Every input is `text-base`.** Anything smaller makes iOS zoom the page on
+focus and the user has to pinch back out. This is a correctness rule.
+
+**Numbers that get compared use `.tnum`** — tabular figures, so prices line up
+down a column.
+
+---
 
 ## Space and shape
 
-Multiples of 4, via Tailwind's scale. `gap-2` within a group, `gap-3` between
-cards, `gap-6` between sections.
+Multiples of 4, through Tailwind's scale. `gap-2` inside a group, `space-y-3`
+between cards, `space-y-5`–`space-y-6` between sections.
 
 | Token | Use |
 |---|---|
-| `rounded-card` | Cards, images, panels |
 | `rounded-control` | Buttons, inputs, selects |
+| `rounded-card` | Cards, images, panels |
+| `rounded-sheet` | Dialogs |
 | `rounded-full` | Pills and badges only |
+
+Shadows are shallow and tinted with ink, never black. `shadow-card` on resting
+surfaces, `shadow-dialog` on modals. A heavy drop shadow is the fastest way to
+look like a template.
+
+---
 
 ## Touch
 
-**44px minimum** on anything tappable — `min-h-11`. This is used while holding
-a basket.
+- **48px minimum** on anything tappable (`min-h-12`); 56px for the primary
+  action and the quantity steppers
+- Primary actions are **full width**
+- On a long screen, the primary action is **sticky** (`.sticky-action`) so it
+  is never something you have to go looking for
+- Destructive controls are never adjacent to their common neighbour
 
-Primary actions are full width. A thumb finds an edge-to-edge button without
-aiming.
-
-Destructive actions are never adjacent to their common neighbour. Remove sits
-apart from quantity.
+---
 
 ## Motion
 
-**Transform and opacity only.** Animating `width`, `height`, `top`, or
-`margin` forces layout on every frame and visibly stutters on budget hardware.
+`src/styles/motion.css`. No animation library
+([ADR 0017](../docs/decisions/0017-motion-is-css-only.md)).
 
-Keep it under 200ms. `prefers-reduced-motion` is honoured globally in
-`styles/base.css`; do not opt a component out of it.
+| Class | Use |
+|---|---|
+| `page-enter` | 220ms rise. Applied by `AppLayout`, keyed on the route |
+| `stagger` | Children enter 35ms apart, capped at eight |
+| `pressable` | Press feedback, `scale(0.975)` |
+| `animate-pulse-soft` | Skeleton loading |
+
+Two rules, no exceptions:
+
+1. **Transform and opacity only.** Animating layout stutters visibly on this
+   hardware.
+2. **Nothing may depend on an animation.** `prefers-reduced-motion` turns all
+   of it off globally, and the app must be complete in that state.
+
+---
 
 ## The four states
 
@@ -109,52 +166,98 @@ review comment.
 
 | State | Component |
 |---|---|
-| Pending | `<Spinner label="Loading produce" />` |
+| Pending | `<Spinner label="Loading produce" />` or `<ProductListSkeleton />` |
 | Error | `<ErrorNotice error={…} onRetry={…} />` |
-| Empty | `<EmptyState title="…" description="…" action={…} />` |
+| Empty | `<EmptyState title=… description=… action=… />` |
 | Loaded | The content |
 
+**Always name what is loading.** "Loading produce" says the app is working
+and on what; a bare spinner says nothing, and that is when people decide it is
+broken.
+
 **Empty is normal, not a failure.** Whole categories will be empty for months.
-An `EmptyState` always offers a way forward — browse everything, register a
-farm, try another category. A bare "no results found" is a dead end and reads
-as a broken app.
+An `EmptyState` always offers a way forward.
+
+---
+
+## Forms
+
+- Label visible above the control, always. Never placeholder-as-label
+- A hint under the label explains the format *before* anyone gets it wrong
+- Mark **optional**, not required — most fields here are required
+- **Never disable the submit button.** Let the browser block the submit and
+  focus the offending field. `disabled` is only for "already submitted"
+- Passwords get a show/hide toggle. Typing one blind on a phone keyboard is
+  why sign-in fails twice in a row
+- Numbers use `QuantityStepper`, not a text field
+- Anything irreversible goes through `ConfirmDialog` first
+
+---
+
+## Copy
+
+Write what you would say out loud to someone at a market.
+
+| Instead of | Write |
+|---|---|
+| "Pending" | "Waiting for the farm to confirm" |
+| "No results found" | "Nothing matched. Try another word." |
+| "Error 500" | "That did not work. Please try again." |
+| "Submit" | "Send for review" |
+| "Are you sure?" | "Empty your basket? Everything in it will be removed." |
+
+Never show an error code. It means nothing to the reader and makes the app
+feel like it is talking to someone else.
+
+---
 
 ## Images
 
 Product photos are the dominant performance risk, not JavaScript.
 
-- `loading="lazy"` and `decoding="async"` on everything below the fold
-- A fixed aspect ratio, so the list does not reflow as images arrive
-- A `leaf-100` block when there is no photo — never a broken image icon
-- Resize client-side before upload ([plan 0002](../docs/plans/0002-product-photos.md))
+- `loading="lazy"` and `decoding="async"` below the fold
+- Explicit dimensions or aspect ratio, so the list does not reflow
+- No photo → a tinted block with a leaf icon, never a broken image
+- Never an emoji as a placeholder
+
+---
 
 ## Layout
 
-Design at **360px** and let it grow. If it only works at 390, it is broken for
-a large share of the audience.
+Design at **360px** and let it grow. Content is capped at `max-w-lg` and
+centred, so a tablet does not stretch a phone layout across the screen.
 
-Bottom navigation is fixed and always visible
-([ADR 0013](../docs/decisions/0013-bottom-navigation-on-phones.md)). Page
-content carries `pb-24` to clear it, and anything bottom-fixed respects
-`env(safe-area-inset-bottom)`.
+Bottom navigation is fixed. Scrolling content carries `.pad-for-nav` to clear
+it, and anything bottom-fixed respects `env(safe-area-inset-bottom)`.
 
-## Money
+---
 
-Always through `formatPeso` or `formatUnitPrice` from `lib/money`. Never
-interpolate a raw number with a peso sign — the value is centavos and the
-result will be 100× wrong.
+## Looking at it
 
-Prices are `font-semibold text-leaf-700`. It is the number people are
-scanning for.
+There is no Playwright here. `scripts/screenshot.mjs` drives headless Chrome
+over CDP with no dependencies:
+
+```bash
+node scripts/screenshot.mjs '{"url":"http://127.0.0.1:5173/","out":"shot.png","w":390,"h":844}'
+```
+
+It takes `seed` to write localStorage before first paint, `cookies` for a
+signed-in screen, and `click` to shoot a screen after an interaction.
+
+It does **not** replace a real phone. Font rendering, the actual address bar
+and safe-area insets are not the real thing.
 
 ---
 
 ## Before you open a pull request
 
 - [ ] No raw hex, arbitrary radius, or interpolated class name
-- [ ] Tap targets `min-h-11`; inputs `text-base`
+- [ ] Tap targets `min-h-12`; every input `text-base`
 - [ ] All four data states handled
 - [ ] `EmptyState` offers a way forward
+- [ ] No disabled submit button
+- [ ] Irreversible actions confirm first
+- [ ] Status has a word, not only a colour
 - [ ] Animation is transform or opacity only
-- [ ] Checked at 360px wide
 - [ ] Money rendered through `lib/money`
+- [ ] Checked at 360px wide

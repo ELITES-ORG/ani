@@ -2,6 +2,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider, createBrowserRouter } from 'react-router-dom';
 import { queryClient } from '@/lib/query-client';
 import { CartProvider } from '@/hooks/useCart';
+import { PageTitleProvider } from '@/hooks/usePageTitle';
 import { AppLayout } from '@/components/AppLayout';
 import { BrowsePage } from '@/pages/BrowsePage';
 import { ProductPage } from '@/pages/ProductPage';
@@ -39,7 +40,9 @@ export function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <CartProvider>
-        <RouterProvider router={router} />
+        <PageTitleProvider>
+          <RouterProvider router={router} />
+        </PageTitleProvider>
       </CartProvider>
     </QueryClientProvider>
   );

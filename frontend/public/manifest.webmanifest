@@ -1,5 +1,5 @@
 {
-  "name": "Ani — Farm to table in Biliran",
+  "name": "Ani \u2014 Farm to table in Biliran",
   "short_name": "Ani",
   "description": "Buy fresh produce straight from farms across Biliran province.",
   "id": "/",
@@ -9,11 +9,21 @@
   "orientation": "portrait",
   "lang": "en",
   "dir": "ltr",
-  "background_color": "#f8faf7",
-  "theme_color": "#f8faf7",
+  "background_color": "#f7f8f4",
+  "theme_color": "#f7f8f4",
   "icons": [
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "/icons/icon-maskable-192.png",
       "sizes": "192x192",

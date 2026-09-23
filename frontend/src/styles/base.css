@@ -1,6 +1,15 @@
+/**
+ * Base layer: the things every screen inherits.
+ *
+ * Read frontend/DESIGN.md before changing anything here — several of these
+ * rules exist because of who uses Ani and on what hardware.
+ */
+
 html {
-  /* Stops iOS zooming when an input under 16px takes focus. */
+  /* Stops iOS enlarging text in landscape. */
   -webkit-text-size-adjust: 100%;
+  /* Anchor scrolling clears the sticky header. */
+  scroll-padding-top: 5rem;
 }
 
 body {
@@ -8,17 +17,128 @@ body {
   background: var(--color-canvas);
   color: var(--color-ink);
   font-family: var(--font-sans);
-  /* Bottom navigation sits on the safe area on notched phones. */
+  font-size: var(--text-base);
+  line-height: var(--text-base--line-height);
+  /* Figtree is slightly wide; a touch of negative tracking tightens headings
+     and body without hurting legibility at small sizes. */
+  letter-spacing: -0.006em;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Grey flash on tap looks broken on Android. Feedback comes from our own
+   pressed states instead, which are visible for longer. */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/**
+ * Focus.
+ *
+ * Visible only for keyboard users, but genuinely visible when it is — a
+ * hairline ring is no use to someone who needs it. Never remove this: it is
+ * the only way some people can tell where they are.
+ */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--color-accent-600);
+  outline-offset: 2px;
+  border-radius: var(--radius-control);
+}
+
+/* Inputs must be 16px or Safari zooms the page when they take focus, and the
+   user has to pinch back out. This is a correctness rule, not a style one. */
+input,
+select,
+textarea,
+button {
+  font: inherit;
+  font-size: max(1rem, 1em);
+  letter-spacing: inherit;
+  color: inherit;
+}
+
+/* Prices and quantities line up in columns when the digits are the same
+   width. Applied where numbers are compared, not to body text. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* Small caps section label. Used for the quiet headings above groups. */
+.eyebrow {
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+}
+
+img {
+  /* An image that has not loaded should hold its space rather than collapse
+     the layout and shove the page around as photos arrive. */
+  background-color: var(--color-sunken);
+}
+
+/* Keeps a screen's main action on screen without it colliding with the
+   bottom navigation. On a long page the primary button must never be the
+   thing you have to go looking for. */
+.sticky-action {
+  position: sticky;
+  bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
+  z-index: 10;
+}
+
+/* A horizontal scroller should not show a scrollbar track on a phone: it eats
+   a few pixels and looks like a rendering fault rather than a control. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Visually hidden, still announced. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* The bottom navigation is fixed, so scrollable pages need to clear it plus
+   the home indicator on a notched phone. */
+.pad-for-nav {
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+.safe-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* Motion is transform and opacity only. Animating layout properties stutters
-   visibly on the budget Android hardware most of this runs on. */
+/**
+ * Motion is transform and opacity only, everywhere.
+ *
+ * Animating layout properties forces a reflow on every frame, which visibly
+ * stutters on the budget Android hardware most of this runs on.
+ *
+ * Anyone who has asked their device for less motion gets none of it. The app
+ * must stay completely usable with every animation switched off, so nothing
+ * may depend on an animation having run.
+ */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

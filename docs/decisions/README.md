@@ -51,3 +51,7 @@ Number sequentially. Never renumber.
 | [0012](./0012-the-service-worker-caches-nothing-yet.md) | The service worker caches nothing yet | Accepted |
 | [0013](./0013-bottom-navigation-on-phones.md) | Bottom navigation on phones | Accepted |
 | [0014](./0014-ai-attribution-is-blocked-by-a-check.md) | AI attribution is blocked by a check, not by a rule | Accepted |
+| [0015](./0015-dark-ink-on-the-brand-green.md) | Dark ink on the brand green | Accepted |
+| [0016](./0016-the-interface-assumes-no-app-literacy.md) | The interface assumes no app literacy | Accepted |
+| [0017](./0017-motion-is-css-only.md) | Motion is a few keyframes, and never load-bearing | Accepted |
+| [0018](./0018-one-self-hosted-variable-font.md) | One self-hosted variable font | Accepted |
