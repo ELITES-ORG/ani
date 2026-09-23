@@ -46,7 +46,7 @@ endpoints than against thirty.
 |---|---|---|
 | 1. Database | 4 / 4 | Complete |
 | 2. API | 5 / 5 | Complete |
-| 3. Web | 0 / 5 | Not started |
+| 3. Web | 3 / 5 | In progress |
 | 4. Keep awake | 0 / 2 | **Deferred** — see the note in phase 4 |
 
 Dashboard URLs move. If a link 404s, navigate from the product's dashboard
@@ -249,12 +249,19 @@ resolving ranges afresh on every deploy.
 
 ## Phase 3 — Web (Vercel)
 
-The API is live at **<https://ani-api-njg8.onrender.com>** — Render appended
-`-njg8` because `ani-api` was already taken globally.
+**Live URLs**
+
+| Piece | URL |
+|---|---|
+| PWA | <https://ani-staging-blrn.vercel.app> |
+| API | <https://ani-api-njg8.onrender.com> |
+| Database | Supabase project `ani-staging`, Singapore |
+
+Render appended `-njg8` because `ani-api` was already taken globally.
 
 ### Step 3.1 — Point the rewrite at the real API
 
-- [ ] **Action.** In [`frontend/vercel.json`](../../frontend/vercel.json),
+- [x] **Action.** In [`frontend/vercel.json`](../../frontend/vercel.json),
       replace the placeholder host in the `/api/:path*` destination with the
       Render URL from step 2.5. Commit and push.
 
@@ -264,7 +271,7 @@ The API is live at **<https://ani-api-njg8.onrender.com>** — Render appended
       git push
       ```
 
-- [ ] **Verify.** `grep onrender frontend/vercel.json` shows your hostname,
+- [x] **Verify.** `grep onrender frontend/vercel.json` shows your hostname,
       not `ani-api.onrender.com` (unless that is genuinely yours).
 
 This rewrite is what keeps the browser on one origin. Without it the session
@@ -273,27 +280,33 @@ locally.
 
 ### Step 3.2 — Import the project
 
-- [ ] **Action.** Go to **<https://vercel.com/new>**, import
+- [x] **Action.** Go to **<https://vercel.com/new>**, import
       `ELITES-ORG/ani`, granting access to the organisation if prompted.
       Set **Root Directory** to `frontend`. Framework preset should detect
       **Vite**.
-- [ ] **Verify.** Root Directory reads `frontend` and the framework is Vite.
+- [x] **Verify.** Root Directory reads `frontend` and the framework is Vite.
 
-### Step 3.3 — Allow files outside the root directory
+### Step 3.3 — Check whether the build can see the contracts
 
-- [ ] **Action.** Still in Root Directory settings, enable
-      **"Include files outside of the Root Directory in the Build Step"**.
-- [ ] **Verify.** The checkbox is ticked before the first deploy.
+- [x] **Action.** Nothing to configure at import time. The setting
+      "Include files outside of the Root Directory in the Build Step" is
+      **not on the import form** — it only exists in Settings → Build and
+      Deployment once the project has been created.
+- [x] **Verify.** The first deploy succeeds.
 
-**This one will bite you.** `frontend/tsconfig.app.json` and
-`frontend/vite.config.ts` both resolve `@contracts/*` to
-`../backend/src/contracts` — one definition of every API shape, shared by both
-sides ([ADR 0008](../decisions/0008-one-definition-of-an-api-shape.md)). With
-the box unticked, Vercel uploads only `frontend/`, and the build dies with
-`Cannot find module '@contracts/products'`. The build works locally, so
-nothing warns you first.
+**This turned out to be a non-issue, recorded because it was expected to be
+one.** `frontend/tsconfig.app.json` and `vite.config.ts` resolve
+`@contracts/*` to `../backend/src/contracts`
+([ADR 0008](../decisions/0008-one-definition-of-an-api-shape.md)), which is
+outside the configured root, so the build was expected to fail with
+`Cannot find module '@contracts/products'`.
 
-If you later see that error, this checkbox is the cause.
+It did not. Vercel clones the whole repository for a git-connected project,
+so the files were present regardless.
+
+If a future build does fail that way, the fix is
+Settings → Build and Deployment → Root Directory → tick **Include files
+outside of the Root Directory in the Build Step** → Redeploy.
 
 ### Step 3.4 — Deploy, then close the CORS loop
 

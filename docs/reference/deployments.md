@@ -1,5 +1,11 @@
 # Deployments
 
+| Where | URL |
+|---|---|
+| PWA | <https://ani-staging-blrn.vercel.app> |
+| API | <https://ani-api-njg8.onrender.com> |
+| Database | Supabase project `ani-staging`, Singapore region |
+
 | Service | Host | Free tier reality |
 |---|---|---|
 | PWA | Vercel | Generous. Not a constraint at this size |
