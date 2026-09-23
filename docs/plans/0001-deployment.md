@@ -1,4 +1,4 @@
-# 0001. Deployment — Vercel, Render, Supabase
+# 0001. Deployment — Supabase, Render, Vercel
 
 - **Status:** Ready
 - **Owner:** unassigned
@@ -8,131 +8,324 @@
 
 ## Goal
 
-Ani reachable at a public URL, with a database that does not expire, so a link
-can be shared with a real farm in Naval and they can open it on their phone.
+Ani reachable at a public URL, backed by a database that does not expire.
+
+**This is an infrastructure rehearsal, not a launch.** Two screens are still
+missing — there is no admin approval UI and no add-produce form — so a farm
+that registers on the deployed site reaches "under review" and stops. That is
+expected. Deploying now is worth doing because every problem below is one that
+cannot happen locally, and they are far cheaper to debug against seven
+endpoints than against thirty.
 
 ## Scope
 
 **In scope**
 
 - Supabase project holding Postgres, migrated and seeded
-- API on Render, reachable and healthy
+- API on Render, healthy, reading that database
 - PWA on Vercel, proxying `/api` to Render so the browser stays on one origin
-- A keep-awake ping so the first visitor of the day does not wait a minute
+- The keep-awake ping switched on
 
 **Out of scope**
 
-- A custom domain — worth doing, not worth blocking the first share on
+- A custom domain
 - Product photos — [plan 0002](./0002-product-photos.md)
+- The missing screens — [plan 0003](./0003-admin-approval-queue.md)
 - Any paid tier
 
 ## Prerequisites
 
-- GitHub repository pushed, with `main` as the default branch
-- Accounts on Supabase, Render, and Vercel
+- `main` pushed to `ELITES-ORG/ani` and CI green
+- Accounts on [Supabase](https://supabase.com/dashboard),
+  [Render](https://dashboard.render.com), and [Vercel](https://vercel.com)
 - `npm run build` passes locally
 
 ## Progress
 
 | Phase | Steps | Status |
 |---|---|---|
-| 1. Database | 0 / 2 | Not started |
-| 2. API | 0 / 3 | Not started |
-| 3. Web | 0 / 3 | Not started |
+| 1. Database | 0 / 4 | Not started |
+| 2. API | 0 / 5 | Not started |
+| 3. Web | 0 / 5 | Not started |
+| 4. Keep awake | 0 / 2 | Not started |
+
+Dashboard URLs move. If a link 404s, navigate from the product's dashboard
+home rather than assuming the step is wrong.
 
 ---
 
-## Phase 1 — Database
+## Phase 1 — Database (Supabase)
 
-### Step 1.1 — Create the Supabase project
+### Step 1.1 — Create the project
 
-- [ ] **Action.** Create a project in the region closest to the Philippines
-      (Singapore). Copy the connection string from Project settings → Database
-      → Connection string → URI, and use the **session pooler** URI rather
-      than the direct connection: Render's free instance opens more
-      connections than the direct limit allows.
-- [ ] **Verify.** `psql "$DATABASE_URL" -c 'select 1'` returns one row.
+- [ ] **Action.** Go to **<https://supabase.com/dashboard/new>**.
+      - Organisation: your own, or create `ELITES-ORG`
+      - Name: `ani`
+      - Database password: generate one and **save it now** — Supabase shows
+        it once and the connection string needs it
+      - Region: **Southeast Asia (Singapore)**, the closest to Biliran
+      - Plan: Free
+- [ ] **Verify.** The project page reaches "Project is ready" (one to two
+      minutes).
 
-### Step 1.2 — Migrate and seed
+### Step 1.2 — Copy the session pooler connection string
 
-- [ ] **Action.** With `DATABASE_URL` set to the Supabase URI, run
-      `npm --prefix backend run db:migrate` then `npm --prefix backend run db:seed`.
-- [ ] **Verify.** `psql "$DATABASE_URL" -c 'select count(*) from municipalities'`
-      returns 8.
+- [ ] **Action.** Project → **Connect** (top bar), or
+      Settings → Database → Connection string. Choose the **Session pooler**
+      URI. Replace `[YOUR-PASSWORD]` with the password from step 1.1.
+
+      It looks like:
+      `postgresql://postgres.<ref>:<password>@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres`
+
+- [ ] **Verify.** The host contains `pooler.supabase.com` and the port is
+      **5432**.
+
+**Not the direct connection, and not the transaction pooler.** Three reasons,
+all of which fail only in production:
+
+- The direct connection is IPv6-only on the free tier, and Render does not
+  give the service an IPv6 route. It will simply refuse to connect.
+- The transaction pooler is port **6543** and does not support prepared
+  statements. `postgres.js` uses them by default, so queries fail at runtime
+  rather than at boot.
+- The session pooler is IPv4 and speaks the full protocol.
+
+### Step 1.3 — Migrate and seed
+
+- [ ] **Action.** From the repository root, with the Supabase URI in the
+      environment for this command only:
+
+      ```bash
+      DATABASE_URL='<session-pooler-uri>' npm --prefix backend run db:migrate
+      DATABASE_URL='<session-pooler-uri>' npm --prefix backend run db:seed
+      ```
+
+      Do not put this value in `backend/.env` — that file stays pointed at
+      local Docker, and a production URI in it is one stray command away from
+      wiping real data.
+
+- [ ] **Verify.** Supabase → Table editor shows `users`, `vendors`,
+      `products`, `orders`, `order_items`, `municipalities`, `barangays`,
+      `sessions`, and `municipalities` holds 8 rows.
+
+### Step 1.4 — Confirm from SQL
+
+- [ ] **Action.** Supabase → SQL editor, run
+      `select count(*) from barangays;`
+- [ ] **Verify.** Returns 27.
 
 ---
 
-## Phase 2 — API
+## Phase 2 — API (Render)
 
-### Step 2.1 — Create the Render web service
+### Step 2.1 — Create the web service
 
-- [ ] **Action.** New Web Service from the repository. Root directory
-      `backend`, build `npm install && npm run build`, start `npm start`,
-      health check path `/api/v1/health`.
-- [ ] **Verify.** The first deploy reaches "Live".
+- [ ] **Action.** Go to **<https://dashboard.render.com/create?type=web>**.
+      Connect GitHub and grant access to **`ELITES-ORG/ani`** — the
+      repository is private, so Render's GitHub app must be installed on the
+      organisation, not just your user.
+- [ ] **Verify.** `ELITES-ORG/ani` appears in the repository list and can be
+      selected.
 
-### Step 2.2 — Set environment variables
+### Step 2.2 — Configure the build
 
-- [ ] **Action.** In the Render dashboard set `NODE_ENV=production`,
-      `DATABASE_URL`, `SESSION_SECRET` (`openssl rand -base64 48`), and
-      `CORS_ORIGINS` set to the Vercel URL. Leave the `SUPABASE_*` variables
-      empty until plan 0002 — blank is treated as absent and photo upload
-      stays disabled, which is intended.
-- [ ] **Verify.** `curl https://<service>.onrender.com/api/v1/health` returns
-      `{"data":{"status":"ok","database":"up",...}}`.
+- [ ] **Action.** Set:
 
-### Step 2.3 — Keep it awake
+      | Field | Value |
+      |---|---|
+      | Name | `ani-api` |
+      | Region | Singapore |
+      | Branch | `main` |
+      | **Root Directory** | `backend` |
+      | Runtime | Node |
+      | Build Command | `npm install && npm run build` |
+      | Start Command | `npm start` |
+      | Instance Type | Free |
 
-- [ ] **Action.** The `Keep awake` workflow already exists and is **disabled**
-      — on a private repository a scheduled no-op still bills a minute per run.
-      Set the `API_HEALTH_URL` repository variable to the Render health URL,
-      then enable it: `gh workflow enable "Keep awake" --repo ELITES-ORG/ani`.
-- [ ] **Verify.** Two consecutive scheduled runs succeed, and Render's metrics
-      show no cold start between them.
+- [ ] **Verify.** Root Directory reads exactly `backend`. Left blank, the
+      build runs at the repository root, finds no `package.json` worth
+      building, and fails.
 
-Render's free tier sleeps a service after 15 minutes idle and takes about a
-minute to wake. For a marketplace someone opens from a Facebook link, a
-one-minute blank screen is the whole first impression.
+Node version comes from `backend/.node-version`, so there is nothing to set.
+
+### Step 2.3 — Environment variables
+
+- [ ] **Action.** Under **Environment**, add:
+
+      | Key | Value |
+      |---|---|
+      | `NODE_ENV` | `production` |
+      | `DATABASE_URL` | the session pooler URI from step 1.2 |
+      | `SESSION_SECRET` | generate one, below |
+      | `CORS_ORIGINS` | `http://localhost:5173` for now — corrected in step 3.4 |
+
+      Generate the secret locally and paste it:
+
+      ```bash
+      openssl rand -base64 48
+      ```
+
+      Leave every `SUPABASE_*` variable unset. Blank is treated as absent,
+      photo upload stays disabled, and everything else works
+      ([environment reference](../reference/environment.md)).
+
+- [ ] **Verify.** `SESSION_SECRET` is at least 32 characters. Shorter and the
+      API exits at boot with a message naming the field.
+
+### Step 2.4 — Health check
+
+- [ ] **Action.** Under **Health & Alerts**, set Health Check Path to
+      `/api/v1/health`.
+- [ ] **Verify.** Saved.
+
+### Step 2.5 — Deploy and confirm
+
+- [ ] **Action.** Create the service and watch the log. Note the public URL,
+      of the form `https://ani-api.onrender.com`.
+- [ ] **Verify.**
+
+      ```bash
+      curl -s https://<your-service>.onrender.com/api/v1/health
+      ```
+
+      returns `{"data":{"status":"ok","database":"up","uptime":…}}`.
+
+      `"database":"down"` means `DATABASE_URL` is wrong — almost always the
+      direct connection instead of the session pooler, or an unreplaced
+      `[YOUR-PASSWORD]`.
+
+      Also check the catalogue answers, even though it is empty:
+
+      ```bash
+      curl -s https://<your-service>.onrender.com/api/v1/products
+      # {"data":[],"meta":{"page":1,"limit":20,"total":0}}
+      ```
 
 ---
 
-## Phase 3 — Web
+## Phase 3 — Web (Vercel)
 
 ### Step 3.1 — Point the rewrite at the real API
 
-- [ ] **Action.** In `frontend/vercel.json`, set the `/api/:path*` destination
-      to the Render URL from step 2.1.
-- [ ] **Verify.** The file contains the deployed hostname, not the placeholder.
+- [ ] **Action.** In [`frontend/vercel.json`](../../frontend/vercel.json),
+      replace the placeholder host in the `/api/:path*` destination with the
+      Render URL from step 2.5. Commit and push.
 
-### Step 3.2 — Create the Vercel project
+      ```bash
+      git add frontend/vercel.json
+      git commit -m "Point the API rewrite at the deployed service"
+      git push
+      ```
 
-- [ ] **Action.** Import the repository. Root directory `frontend`, framework
-      Vite. Leave `VITE_API_BASE_URL` unset so the client uses the relative
-      `/api/v1` and the rewrite keeps it same-origin — session cookies depend
-      on that.
-- [ ] **Verify.** The deployed site lists produce, and the network tab shows
-      `/api/v1/products` returning 200 from the Vercel origin.
+- [ ] **Verify.** `grep onrender frontend/vercel.json` shows your hostname,
+      not `ani-api.onrender.com` (unless that is genuinely yours).
 
-### Step 3.3 — Close the CORS loop
+This rewrite is what keeps the browser on one origin. Without it the session
+cookie is cross-site and sign-in silently fails in production while working
+locally.
 
-- [ ] **Action.** Set `CORS_ORIGINS` on Render to the Vercel production URL.
-- [ ] **Verify.** Registering an account on the deployed site succeeds and the
-      session survives a reload.
+### Step 3.2 — Import the project
+
+- [ ] **Action.** Go to **<https://vercel.com/new>**, import
+      `ELITES-ORG/ani`, granting access to the organisation if prompted.
+      Set **Root Directory** to `frontend`. Framework preset should detect
+      **Vite**.
+- [ ] **Verify.** Root Directory reads `frontend` and the framework is Vite.
+
+### Step 3.3 — Allow files outside the root directory
+
+- [ ] **Action.** Still in Root Directory settings, enable
+      **"Include files outside of the Root Directory in the Build Step"**.
+- [ ] **Verify.** The checkbox is ticked before the first deploy.
+
+**This one will bite you.** `frontend/tsconfig.app.json` and
+`frontend/vite.config.ts` both resolve `@contracts/*` to
+`../backend/src/contracts` — one definition of every API shape, shared by both
+sides ([ADR 0008](../decisions/0008-one-definition-of-an-api-shape.md)). With
+the box unticked, Vercel uploads only `frontend/`, and the build dies with
+`Cannot find module '@contracts/products'`. The build works locally, so
+nothing warns you first.
+
+If you later see that error, this checkbox is the cause.
+
+### Step 3.4 — Deploy, then close the CORS loop
+
+- [ ] **Action.** Deploy. Note the production URL, of the form
+      `https://ani.vercel.app`.
+
+      Then go back to Render → your service → Environment and set
+      `CORS_ORIGINS` to that exact URL — scheme, no trailing slash, for
+      example `https://ani.vercel.app`. Save; Render redeploys.
+
+- [ ] **Verify.** The deployed site loads and shows "Nothing here yet" rather
+      than an error. The network tab shows `/api/v1/products` returning 200
+      from the **Vercel** origin, not from `onrender.com`.
+
+Leave `VITE_API_BASE_URL` unset on Vercel. The client defaults to the relative
+`/api/v1`, which the rewrite handles. Setting it to the Render URL makes every
+request cross-origin and breaks sign-in.
+
+### Step 3.5 — Prove the session works in production
+
+- [ ] **Action.** On the deployed site: register an account, reload the page,
+      then register a farm.
+- [ ] **Verify.** After reload you are still signed in, and the Sell tab shows
+      "Your farm is being reviewed". That dead end is
+      [expected](./0003-admin-approval-queue.md).
+
+      If reloading signs you out, the cookie is not sticking: check that
+      `CORS_ORIGINS` exactly matches the Vercel URL and that requests are
+      going through the Vercel origin.
+
+---
+
+## Phase 4 — Keep awake
+
+### Step 4.1 — Set the health URL
+
+- [ ] **Action.** Go to
+      **<https://github.com/ELITES-ORG/ani/settings/variables/actions>** and
+      add a repository variable `API_HEALTH_URL` with value
+      `https://<your-service>.onrender.com/api/v1/health`.
+- [ ] **Verify.** The variable is listed.
+
+### Step 4.2 — Enable the workflow
+
+- [ ] **Action.**
+
+      ```bash
+      gh workflow enable "Keep awake" --repo ELITES-ORG/ani
+      gh workflow run "Keep awake" --repo ELITES-ORG/ani
+      ```
+
+- [ ] **Verify.** `gh run list --repo ELITES-ORG/ani --workflow "Keep awake"`
+      shows a successful run.
+
+It is disabled until now on purpose: on a private repository each scheduled
+run bills a minimum of one minute, so pinging nothing every ten minutes would
+spend around 100 minutes a day of the free allowance.
+
+Render still sleeps after 15 minutes idle outside the scheduled window. The
+only real fix is a paid instance — see
+[deployments](../reference/deployments.md).
 
 ---
 
 ## Acceptance
 
-- [ ] The catalogue loads at the Vercel URL with no console errors
-- [ ] Register, sign in, and reload keeps the session
-- [ ] A farm can register and is visibly `pending`
 - [ ] `/api/v1/health` reports `database: up`
+- [ ] The Vercel site loads the (empty) catalogue with no console errors
+- [ ] Register, reload, still signed in
+- [ ] A farm can register and shows as under review
 - [ ] Chrome on Android offers "Add to Home Screen"
-- [ ] Two consecutive keep-awake runs pass
+- [ ] One manual keep-awake run succeeds
 
 ## Follow-ups
 
-- Custom domain and HTTPS redirect
-- Facebook link previews, which need SSR or prerendering — see the debt
-  section in [architecture](../explanation/architecture.md)
+- The two missing screens, before this link goes to a real farm —
+  [plan 0003](./0003-admin-approval-queue.md)
+- Custom domain
+- Facebook link previews, which need SSR or prerendering. Until then a shared
+  product link is a blank card — see the debt section in
+  [architecture](../explanation/architecture.md)
 - Backups beyond Supabase's free-tier retention
