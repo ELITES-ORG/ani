@@ -1,6 +1,6 @@
 # 0001. Deployment — Supabase, Render, Vercel
 
-- **Status:** Ready
+- **Status:** In progress
 - **Owner:** unassigned
 - **Related:** [ADR 0005](../decisions/0005-supabase-is-the-database-not-the-backend.md),
   [reference/deployments](../reference/deployments.md),
@@ -44,8 +44,8 @@ endpoints than against thirty.
 
 | Phase | Steps | Status |
 |---|---|---|
-| 1. Database | 0 / 4 | Not started |
-| 2. API | 0 / 5 | Not started |
+| 1. Database | 4 / 4 | Complete |
+| 2. API | 5 / 5 | Complete |
 | 3. Web | 0 / 5 | Not started |
 | 4. Keep awake | 0 / 2 | **Deferred** — see the note in phase 4 |
 
@@ -58,7 +58,7 @@ home rather than assuming the step is wrong.
 
 ### Step 1.1 — Create the project
 
-- [ ] **Action.** Go to **<https://supabase.com/dashboard/new>**.
+- [x] **Action.** Go to **<https://supabase.com/dashboard/new>**.
       - Organisation: your own, or create `ELITES-ORG`
       - Name: `ani` — not the pre-filled "<your handle>'s Project"
       - Database password: generate one and **save it now** — Supabase shows
@@ -68,7 +68,7 @@ home rather than assuming the step is wrong.
       - GitHub (optional): **leave empty**
       - Security: **untick "Enable Data API"**. Leave "Enable automatic RLS"
         unticked.
-- [ ] **Verify.** The project page reaches "Project is ready" (one to two
+- [x] **Verify.** The project page reaches "Project is ready" (one to two
       minutes), and Settings → API does not offer a public REST URL for the
       `public` schema.
 
@@ -99,14 +99,14 @@ to the database role.
 
 ### Step 1.2 — Copy the session pooler connection string
 
-- [ ] **Action.** Project → **Connect** (top bar), or
+- [x] **Action.** Project → **Connect** (top bar), or
       Settings → Database → Connection string. Choose the **Session pooler**
       URI. Replace `[YOUR-PASSWORD]` with the password from step 1.1.
 
       It looks like:
       `postgresql://postgres.<ref>:<password>@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres`
 
-- [ ] **Verify.** The host contains `pooler.supabase.com` and the port is
+- [x] **Verify.** The host contains `pooler.supabase.com` and the port is
       **5432**.
 
 **Not the direct connection, and not the transaction pooler.** Three reasons,
@@ -121,7 +121,7 @@ all of which fail only in production:
 
 ### Step 1.3 — Migrate and seed
 
-- [ ] **Action.** From the repository root, with the Supabase URI in the
+- [x] **Action.** From the repository root, with the Supabase URI in the
       environment for this command only:
 
       ```bash
@@ -133,15 +133,15 @@ all of which fail only in production:
       local Docker, and a production URI in it is one stray command away from
       wiping real data.
 
-- [ ] **Verify.** Supabase → Table editor shows `users`, `vendors`,
+- [x] **Verify.** Supabase → Table editor shows `users`, `vendors`,
       `products`, `orders`, `order_items`, `municipalities`, `barangays`,
       `sessions`, and `municipalities` holds 8 rows.
 
 ### Step 1.4 — Confirm from SQL
 
-- [ ] **Action.** Supabase → SQL editor, run
+- [x] **Action.** Supabase → SQL editor, run
       `select count(*) from barangays;`
-- [ ] **Verify.** Returns 27.
+- [x] **Verify.** Returns 27.
 
 ---
 
@@ -149,16 +149,16 @@ all of which fail only in production:
 
 ### Step 2.1 — Create the web service
 
-- [ ] **Action.** Go to **<https://dashboard.render.com/create?type=web>**.
+- [x] **Action.** Go to **<https://dashboard.render.com/create?type=web>**.
       Connect GitHub and grant access to **`ELITES-ORG/ani`** — the
       repository is private, so Render's GitHub app must be installed on the
       organisation, not just your user.
-- [ ] **Verify.** `ELITES-ORG/ani` appears in the repository list and can be
+- [x] **Verify.** `ELITES-ORG/ani` appears in the repository list and can be
       selected.
 
 ### Step 2.2 — Configure the build
 
-- [ ] **Action.** Set:
+- [x] **Action.** Set:
 
       | Field | Value |
       |---|---|
@@ -171,7 +171,7 @@ all of which fail only in production:
       | Start Command | `npm start` |
       | Instance Type | Free |
 
-- [ ] **Verify.** Root Directory reads exactly `backend`. Left blank, the
+- [x] **Verify.** Root Directory reads exactly `backend`. Left blank, the
       build runs at the repository root, finds no `package.json` worth
       building, and fails.
 
@@ -194,7 +194,7 @@ resolving ranges afresh on every deploy.
 
 ### Step 2.3 — Environment variables
 
-- [ ] **Action.** Under **Environment**, add:
+- [x] **Action.** Under **Environment**, add:
 
       | Key | Value |
       |---|---|
@@ -213,20 +213,20 @@ resolving ranges afresh on every deploy.
       photo upload stays disabled, and everything else works
       ([environment reference](../reference/environment.md)).
 
-- [ ] **Verify.** `SESSION_SECRET` is at least 32 characters. Shorter and the
+- [x] **Verify.** `SESSION_SECRET` is at least 32 characters. Shorter and the
       API exits at boot with a message naming the field.
 
 ### Step 2.4 — Health check
 
-- [ ] **Action.** Under **Health & Alerts**, set Health Check Path to
+- [x] **Action.** Under **Health & Alerts**, set Health Check Path to
       `/api/v1/health`.
-- [ ] **Verify.** Saved.
+- [x] **Verify.** Saved.
 
 ### Step 2.5 — Deploy and confirm
 
-- [ ] **Action.** Create the service and watch the log. Note the public URL,
+- [x] **Action.** Create the service and watch the log. Note the public URL,
       of the form `https://ani-api.onrender.com`.
-- [ ] **Verify.**
+- [x] **Verify.**
 
       ```bash
       curl -s https://<your-service>.onrender.com/api/v1/health
@@ -248,6 +248,9 @@ resolving ranges afresh on every deploy.
 ---
 
 ## Phase 3 — Web (Vercel)
+
+The API is live at **<https://ani-api-njg8.onrender.com>** — Render appended
+`-njg8` because `ani-api` was already taken globally.
 
 ### Step 3.1 — Point the rewrite at the real API
 

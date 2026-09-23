@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://ani-api.onrender.com/api/:path*"
+      "destination": "https://ani-api-njg8.onrender.com/api/:path*"
     },
     {
       "source": "/((?!assets/).*)",
