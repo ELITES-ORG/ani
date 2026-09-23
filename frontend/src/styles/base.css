@@ -1,0 +1,24 @@
+html {
+  /* Stops iOS zooming when an input under 16px takes focus. */
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  /* Bottom navigation sits on the safe area on notched phones. */
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Motion is transform and opacity only. Animating layout properties stutters
+   visibly on the budget Android hardware most of this runs on. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: ani-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ani
+      POSTGRES_PASSWORD: ani
+      POSTGRES_DB: ani
+    ports:
+      # 5433, not 5432: Bilikha's Postgres runs on the same machine and
+      # takes the default port. Both sibling projects need to be up at once.
+      - '5433:5432'
+    volumes:
+      - ani-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ani -d ani']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  ani-pgdata:

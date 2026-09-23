@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: ani
+          POSTGRES_PASSWORD: ani
+          POSTGRES_DB: ani
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U ani -d ani"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://ani:ani@localhost:5432/ani
+      SESSION_SECRET: ci-session-secret-at-least-thirty-two-chars
+      NODE_ENV: test
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # check:commits needs the range, not just the tip.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install
+        run: |
+          npm --prefix backend ci || npm --prefix backend install
+          npm --prefix frontend ci || npm --prefix frontend install
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Migrate
+        run: npm --prefix backend run db:migrate
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Documentation links and plan statuses
+        run: npm run docs:check
+
+  attribution:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # The backstop for a clone that never ran `npm run hooks:install`.
+      # See docs/decisions/0014-ai-attribution-is-blocked-by-a-check.md.
+      - name: No AI attribution in commit messages
+        run: |
+          base="${{ github.event.pull_request.base.sha || github.event.before }}"
+          if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
+            base=$(git rev-list --max-parents=0 HEAD | tail -1)
+          fi
+          node scripts/check-commit-msg.mjs --range "$base..HEAD"
