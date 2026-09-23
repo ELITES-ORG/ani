@@ -65,6 +65,7 @@ home rather than assuming the step is wrong.
         it once and the connection string needs it
       - Region: **Southeast Asia (Singapore)**, the closest to Biliran
       - Plan: Free
+      - GitHub (optional): **leave empty**
       - Security: **untick "Enable Data API"**. Leave "Enable automatic RLS"
         unticked.
 - [ ] **Verify.** The project page reaches "Project is ready" (one to two
@@ -89,6 +90,12 @@ Settings → API if that ever turns out to be wrong.
 
 Automatic RLS stays off because there is then nothing for a policy to protect,
 and the API connects as the table owner, which bypasses RLS anyway.
+
+**Leave the GitHub field empty too.** It lets Supabase apply schema changes
+from the repository, which would make it a second schema owner alongside
+Drizzle ([ADR 0004](../decisions/0004-migrations-over-db-push.md)). Two of
+those in one database is the drift this project avoided by keeping Supabase
+to the database role.
 
 ### Step 1.2 — Copy the session pooler connection string
 
