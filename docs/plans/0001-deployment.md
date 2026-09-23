@@ -83,8 +83,10 @@ can be shared with a real farm in Naval and they can open it on their phone.
 
 ### Step 2.3 — Keep it awake
 
-- [ ] **Action.** Add `.github/workflows/keep-awake.yml` pinging
-      `/api/v1/health` every 10 minutes during waking hours in PHT.
+- [ ] **Action.** The `Keep awake` workflow already exists and is **disabled**
+      — on a private repository a scheduled no-op still bills a minute per run.
+      Set the `API_HEALTH_URL` repository variable to the Render health URL,
+      then enable it: `gh workflow enable "Keep awake" --repo ELITES-ORG/ani`.
 - [ ] **Verify.** Two consecutive scheduled runs succeed, and Render's metrics
       show no cold start between them.
 

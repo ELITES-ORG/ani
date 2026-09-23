@@ -6,6 +6,11 @@ name: Keep awake
 #
 # This does not solve the problem, it moves it to the hours nobody is looking.
 # The real fix is a paid instance — see docs/reference/deployments.md.
+#
+# DISABLED until there is an API to ping. On a private repository every
+# scheduled run bills a minimum of one minute, so a no-op every ten minutes
+# would spend roughly 100 minutes a day of the free allowance achieving
+# nothing. Plan 0001 step 2.3 turns it back on.
 
 on:
   schedule:
