@@ -1,6 +1,30 @@
 import { QueryClient } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
-import { apiClient } from './api-client';
+import { apiClient, ApiError } from './api-client';
+
+/**
+ * Whether a failed request is worth repeating.
+ *
+ * A 4xx will not become a 2xx by asking again: the session is gone, the thing
+ * is missing, or the input was wrong. Retrying costs three round trips on
+ * prepaid mobile data for a guaranteed failure, and it delays the screen that
+ * would have explained what happened.
+ *
+ * 5xx and genuine network failures do get retried — those are the ones a
+ * second attempt can actually fix, and dropped connections are routine here.
+ */
+export function shouldRetry(failureCount: number, error: unknown): boolean {
+  const status =
+    error instanceof AxiosError
+      ? error.response?.status
+      : error instanceof ApiError
+        ? error.status
+        : undefined;
+
+  if (status !== undefined && status >= 400 && status < 500) return false;
+
+  return failureCount < 2;
+}
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -9,7 +33,7 @@ export const queryClient = new QueryClient({
       // data, and refetching the same catalogue page costs them money.
       staleTime: 5 * 60 * 1000,
       gcTime: 30 * 60 * 1000,
-      retry: 2,
+      retry: shouldRetry,
       refetchOnWindowFocus: false,
     },
   },

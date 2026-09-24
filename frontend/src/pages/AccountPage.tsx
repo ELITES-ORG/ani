@@ -8,11 +8,10 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorNotice } from '@/components/ui/ErrorNotice';
 import { Spinner } from '@/components/ui/Spinner';
 import { StatusPill, type StatusTone } from '@/components/ui/StatusPill';
+import { formatPhone } from '@/lib/phone';
+import type { VendorStatus } from '@contracts/vendors';
 
-const FARM_STATUS: Record<
-  'pending' | 'approved' | 'suspended',
-  { label: string; tone: StatusTone }
-> = {
+const FARM_STATUS: Record<VendorStatus, { label: string; tone: StatusTone }> = {
   pending: { label: 'Waiting for review', tone: 'waiting' },
   approved: { label: 'Approved', tone: 'active' },
   suspended: { label: 'Paused', tone: 'stopped' },
@@ -66,7 +65,7 @@ export function AccountPage() {
       <dl className="space-y-4 rounded-card border border-border bg-surface p-4">
         <div>
           <dt className="eyebrow">Mobile number</dt>
-          <dd className="mt-1 text-base font-semibold text-ink">{user.phone}</dd>
+          <dd className="tnum mt-1 text-base font-semibold text-ink">{formatPhone(user.phone)}</dd>
         </div>
 
         <div className="border-t border-border pt-4">
@@ -87,6 +86,13 @@ export function AccountPage() {
         </div>
       </dl>
 
+      {/*
+        A failed sign-out has to say so. The API sleeps after fifteen minutes
+        on the free tier and can take most of a minute to wake, so "nothing
+        happened" is a real outcome here, not a hypothetical one.
+      */}
+      {logout.isError && <ErrorNotice error={logout.error} />}
+
       <Button variant="danger" onClick={() => setConfirmingLogout(true)}>
         Sign out
       </Button>
@@ -96,6 +102,8 @@ export function AccountPage() {
         title="Sign out?"
         description="Your basket stays on this phone. Nothing in it is removed."
         confirmLabel="Sign out"
+        confirmLoading={logout.isPending}
+        confirmLoadingLabel="Signing you out…"
         cancelLabel="Stay signed in"
         destructive
         onConfirm={() => {
@@ -104,6 +112,8 @@ export function AccountPage() {
               setConfirmingLogout(false);
               void navigate('/', { replace: true });
             },
+            // Close the dialog so the error underneath it is readable.
+            onError: () => setConfirmingLogout(false),
           });
         }}
         onCancel={() => setConfirmingLogout(false)}

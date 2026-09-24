@@ -28,22 +28,52 @@ export const apiClient = axios.create({
 });
 
 /**
- * Normalises anything the UI might catch into a plain Error with a message
+ * An error from the API, carrying the machine-readable code alongside the
+ * message.
+ *
+ * The code matters: a screen that wants to put "that username is taken" on
+ * the username field has to recognise the failure, and matching on the
+ * user-facing sentence means a copy edit silently breaks the behaviour.
+ * `CONNECTION` and `TIMEOUT` are ours; everything else comes from the API
+ * (see docs/reference/api.md).
+ */
+export class ApiError extends Error {
+  readonly code: string;
+  readonly status: number | undefined;
+
+  constructor(message: string, code: string, status?: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.code = code;
+    this.status = status;
+  }
+}
+
+/**
+ * Normalises anything the UI might catch into an ApiError with a message
  * worth showing someone.
  *
  * Connections in Biliran drop and time out routinely, so those two cases get
  * their own wording instead of falling through to a generic failure.
  */
-export function toApiError(error: unknown): Error {
+export function toApiError(error: unknown): ApiError {
   if (error instanceof AxiosError) {
     if (error.code === 'ECONNABORTED') {
-      return new Error('That took too long. Check your connection and try again.');
+      return new ApiError('That took too long. Check your connection and try again.', 'TIMEOUT');
     }
     if (!error.response) {
-      return new Error('Cannot reach the server. Check your connection.');
+      return new ApiError('Cannot reach the server. Check your connection.', 'CONNECTION');
     }
     const body = error.response.data as ApiErrorBody | undefined;
-    return new Error(body?.error?.message ?? `Request failed with status ${error.response.status}`);
+    return new ApiError(
+      body?.error?.message ?? `Request failed with status ${error.response.status}`,
+      body?.error?.code ?? 'UNKNOWN',
+      error.response.status,
+    );
   }
-  return error instanceof Error ? error : new Error('Something unexpected went wrong');
+  if (error instanceof ApiError) return error;
+  return new ApiError(
+    error instanceof Error ? error.message : 'Something unexpected went wrong',
+    'UNKNOWN',
+  );
 }

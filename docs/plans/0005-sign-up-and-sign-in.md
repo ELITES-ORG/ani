@@ -1,6 +1,6 @@
 # 0005. Finish sign-up and sign-in
 
-- **Status:** Done
+- **Status:** In progress
 - **Owner:** unassigned
 - **Related:** [ADR 0006](../decisions/0006-username-password-auth-with-server-sessions.md),
   [ADR 0007](../decisions/0007-one-account-selling-is-a-role.md),

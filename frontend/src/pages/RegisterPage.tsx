@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { useRegister } from '@/features/auth/api';
 import { readReturnPath } from '@/lib/return-path';
+import { ApiError } from '@/lib/api-client';
 import { Button } from '@/components/ui/Button';
 import { ErrorNotice } from '@/components/ui/ErrorNotice';
 import { TextField } from '@/components/ui/Field';
@@ -47,9 +48,10 @@ export function RegisterPage() {
         ? 'Letters, numbers, underscores and dots only — no spaces.'
         : undefined;
 
+  // Matched on the code, not the sentence: the API owns that copy, and a
+  // reword there must not silently move this error off the field.
   const duplicateUsername =
-    register.isError &&
-    register.error.message === 'That username is already taken.'
+    register.error instanceof ApiError && register.error.code === 'CONFLICT'
       ? register.error.message
       : undefined;
 
@@ -91,6 +93,11 @@ export function RegisterPage() {
         required
         minLength={3}
         maxLength={30}
+        // Without this the browser reports "Juan Cruz" as valid, the submit
+        // handler bails silently, and the button does nothing at all — the
+        // dead control ADR 0016 exists to prevent. With it, the browser
+        // blocks the submit and moves focus to this field.
+        pattern="[a-zA-Z0-9_.]+"
         {...(fieldUsernameError !== undefined && { error: fieldUsernameError })}
       />
 
