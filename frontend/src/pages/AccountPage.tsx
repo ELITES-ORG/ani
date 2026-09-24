@@ -69,6 +69,22 @@ export function AccountPage() {
         </div>
 
         <div className="border-t border-border pt-4">
+          <dt className="eyebrow">Where you live</dt>
+          <dd className="mt-1.5">
+            {user.home === null ? (
+              <p className="text-base text-ink-muted">Not added yet</p>
+            ) : (
+              <div className="space-y-0.5">
+                <p className="text-base font-semibold text-ink">{user.home.addressDetail}</p>
+                <p className="text-base text-ink-muted">
+                  {user.home.barangay}, {user.home.municipality}
+                </p>
+              </div>
+            )}
+          </dd>
+        </div>
+
+        <div className="border-t border-border pt-4">
           <dt className="eyebrow flex items-center gap-1.5">
             <Store size={13} aria-hidden />
             Farm

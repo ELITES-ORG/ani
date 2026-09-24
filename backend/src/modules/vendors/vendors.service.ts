@@ -2,6 +2,7 @@ import { and, count, eq } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 import { barangays, municipalities, vendors } from '../../db/schema/index.js';
 import { AppError } from '../../lib/http-error.js';
+import { resolveMunicipalityBarangay } from '../../lib/geography.js';
 import type { VendorDetail, VendorSummary } from '../../contracts/vendors.js';
 import type { ListMeta } from '../../contracts/pagination.js';
 
@@ -29,24 +30,10 @@ export async function registerVendor(
     throw AppError.conflict('This account already has a farm registered.');
   }
 
-  const municipality = await db.query.municipalities.findFirst({
-    where: eq(municipalities.slug, input.municipalitySlug),
-  });
-  if (!municipality) {
-    throw AppError.badRequest(`Unknown municipality "${input.municipalitySlug}"`);
-  }
-
-  const barangay = await db.query.barangays.findFirst({
-    where: and(
-      eq(barangays.slug, input.barangaySlug),
-      eq(barangays.municipalityId, municipality.id),
-    ),
-  });
-  if (!barangay) {
-    throw AppError.badRequest(
-      `Barangay "${input.barangaySlug}" is not in ${municipality.name}`,
-    );
-  }
+  const { municipality, barangay } = await resolveMunicipalityBarangay(
+    input.municipalitySlug,
+    input.barangaySlug,
+  );
 
   const [created] = await db
     .insert(vendors)

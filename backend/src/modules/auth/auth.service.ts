@@ -1,8 +1,10 @@
 import { eq } from 'drizzle-orm';
 import { db } from '../../db/index.js';
-import { users, vendors } from '../../db/schema/index.js';
+import { barangays, municipalities, users, vendors } from '../../db/schema/index.js';
 import { AppError } from '../../lib/http-error.js';
+import { resolveMunicipalityBarangay } from '../../lib/geography.js';
 import { hashPassword, verifyPassword } from '../../lib/password.js';
+import { composeFullName, readNameParts } from '../../lib/name.js';
 import type { CurrentUser } from '../../contracts/me.js';
 
 type UserRow = typeof users.$inferSelect;
@@ -10,7 +12,13 @@ type UserRow = typeof users.$inferSelect;
 export interface RegisterInput {
   username: string;
   password: string;
-  fullName: string;
+  firstName: string;
+  middleName?: string | undefined;
+  lastName: string;
+  suffix?: string | undefined;
+  municipalitySlug: string;
+  barangaySlug: string;
+  addressDetail: string;
   phone: string;
   email?: string | undefined;
 }
@@ -23,12 +31,31 @@ export async function registerUser(input: RegisterInput): Promise<UserRow> {
     throw AppError.conflict('That username is already taken.');
   }
 
+  const { municipality, barangay } = await resolveMunicipalityBarangay(
+    input.municipalitySlug,
+    input.barangaySlug,
+  );
+
   const [created] = await db
     .insert(users)
     .values({
       username: input.username,
       passwordHash: await hashPassword(input.password),
-      fullName: input.fullName,
+      firstName: input.firstName,
+      middleName: input.middleName ?? null,
+      lastName: input.lastName,
+      suffix: input.suffix ?? null,
+      // Still written during the expand phase so the previous release, which
+      // reads only full_name, sees a real name if it is running or rolled
+      // back to. Removed in the contract step.
+      fullName: composeFullName({
+        firstName: input.firstName,
+        lastName: input.lastName,
+        suffix: input.suffix ?? null,
+      }),
+      municipalityId: municipality.id,
+      barangayId: barangay.id,
+      addressDetail: input.addressDetail,
       phone: input.phone,
       email: input.email ?? null,
     })
@@ -57,11 +84,39 @@ export async function authenticate(username: string, password: string): Promise<
 export async function currentUser(user: UserRow): Promise<CurrentUser> {
   const vendor = await db.query.vendors.findFirst({ where: eq(vendors.userId, user.id) });
 
+  let home: CurrentUser['home'] = null;
+  if (
+    user.municipalityId !== null &&
+    user.barangayId !== null &&
+    user.addressDetail !== null
+  ) {
+    const [municipality, barangay] = await Promise.all([
+      db.query.municipalities.findFirst({ where: eq(municipalities.id, user.municipalityId) }),
+      db.query.barangays.findFirst({ where: eq(barangays.id, user.barangayId) }),
+    ]);
+    if (municipality && barangay) {
+      home = {
+        municipality: municipality.name,
+        barangay: barangay.name,
+        addressDetail: user.addressDetail,
+      };
+    }
+  }
+
+  const { firstName, lastName } = readNameParts(user);
+
   return {
     id: user.id,
     username: user.username,
-    fullName: user.fullName,
+    fullName: composeFullName({ firstName, lastName, suffix: user.suffix }),
+    name: {
+      first: firstName,
+      middle: user.middleName,
+      last: lastName,
+      suffix: user.suffix,
+    },
     phone: user.phone,
+    home,
     isAdmin: user.isAdmin,
     vendor: vendor ? { id: vendor.id, farmName: vendor.farmName, status: vendor.status } : null,
   };

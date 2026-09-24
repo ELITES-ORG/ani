@@ -34,6 +34,16 @@ const PLANS = path.join(process.cwd(), 'docs', 'plans');
  */
 const CLAIMS_FINISHED = (value) => /^(complete|done)\.?$/i.test(value.trim());
 
+/**
+ * The words docs/plans/_template.md allows at the start of a Status line.
+ *
+ * A qualifier after them is still fine — "Complete, except the browser smoke
+ * test" is honest — but the leading word has to be one of these. "Done" on a
+ * plan whose branch had not merged slipped through twice in Ani before this
+ * existed, because nothing checked the word itself.
+ */
+const STATUS_WORDS = /^(draft|ready|blocked|in progress|complete)\b/i;
+
 /** Phase cells are looser: "Complete", "Done" and "Complete locally" all count. */
 const PHASE_FINISHED = (value) => /^(complete|done)/i.test(value.trim());
 
@@ -58,6 +68,7 @@ const EXEMPT = (value) =>
 /** `# Phase 6 — Portfolio` */
 const PHASE_HEADING = /^#\s*Phase\s+(\d+)\b/;
 
+const vocabularyFailures = [];
 const statusFailures = [];
 const boxFailures = [];
 let checked = 0;
@@ -109,6 +120,9 @@ for (const name of names) {
   const statusLine = lines.find((line) => line.startsWith('- **Status:**'));
   if (!statusLine) continue;
   const status = statusLine.replace('- **Status:**', '').trim();
+  if (!relative.endsWith('_template.md') && !STATUS_WORDS.test(status)) {
+    vocabularyFailures.push({ file: relative, status });
+  }
   if (!CLAIMS_FINISHED(status)) continue;
 
   checked += 1;
@@ -177,10 +191,26 @@ if (indexFailures.length > 0) {
   console.error('\nUpdate docs/plans/README.md — it is what people read first.');
 }
 
-if (statusFailures.length > 0 || boxFailures.length > 0 || indexFailures.length > 0) {
+if (vocabularyFailures.length > 0) {
+  console.error(`\n${vocabularyFailures.length} plan(s) use a status the template does not define:\n`);
+  for (const { file, status } of vocabularyFailures) {
+    console.error(`  ${file}  "${status}"`);
+  }
+  console.error(
+    '\nStart the status with Draft, Ready, Blocked, In progress or Complete (docs/plans/_template.md).',
+  );
+}
+
+if (
+  vocabularyFailures.length > 0 ||
+  statusFailures.length > 0 ||
+  boxFailures.length > 0 ||
+  indexFailures.length > 0
+) {
   process.exit(1);
 }
 
 console.log('Every finished plan agrees with its own progress table.');
 console.log('Every finished phase has its boxes ticked.');
 console.log('The README index agrees with every plan.');
+console.log('Every plan status uses the template vocabulary.');

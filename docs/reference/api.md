@@ -57,15 +57,22 @@ credentials with every request; the frontend client does this by default.
 | `POST` | `/auth/logout` | — | 204. Destroys the session |
 | `GET` | `/auth/me` | session | Same shape as `/me` |
 
-`register` takes `username`, `password` (8+), `fullName`, `phone`, and
-optional `email`. Username is lowercased; `0917…`, `+63917…`, and
-`0917 123 4567` all normalise to `+63917…`.
+`register` takes `username`, `password` (8+), `firstName`, `lastName`,
+`municipalitySlug`, `barangaySlug`, `addressDetail`, `phone`, and optional
+`middleName`, `suffix`, and `email`. Username is lowercased; `0917…`,
+`+63917…`, and `0917 123 4567` all normalise to `+63917…`. A barangay that is
+not in the given municipality is a 400.
 
 ## Me
 
 | Method | Path | Auth | Notes |
 |---|---|---|---|
 | `GET` | `/me` | session | `CurrentUser`, with `vendor: null` until a farm is registered |
+
+`CurrentUser` includes `fullName` (derived: first last suffix), `name` parts,
+`home` (`municipality`, `barangay`, `addressDetail`) or `home: null` for
+accounts that predate collecting an address, and `vendor`. Home address is
+personal data and appears only here.
 
 Every signed-in screen loads this once and branches on `vendor`.
 
