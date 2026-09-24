@@ -18,29 +18,29 @@ const TITLES: Record<string, string> = {
 };
 
 /**
- * The leaf mark.
+ * The mascot mark.
  *
- * The viewBox is cropped to the path's own bounds (x 19-46, y 16-42 of the
- * app icon's 64 grid). At the icon's full 0 0 64 64 the leaf fills under half
- * the box and reads as a smudge beside the wordmark.
+ * A crop of the rooster's head rather than the whole character. At the 36px
+ * this renders at, a full-body mascot would be about six pixels of head —
+ * the crop is the only version that reads. Same crop as the app icon, so the
+ * thing on the home screen and the thing at the top of the page are
+ * recognisably one product.
  *
- * Two arcs and a midrib — the same shape as the app icon, so the thing on the
- * home screen and the thing at the top of the page are recognisably one
- * product. Drawn inline because at this size a request would cost more than
- * the path data.
+ * Dimensions are explicit: an unsized image in a flex row reflows the
+ * wordmark sideways when it loads.
  */
-function LeafMark() {
+function MascotMark() {
   return (
-    <svg viewBox="17 14 31 30" className="size-8 shrink-0" aria-hidden focusable="false">
-      <path d="M46 16c0 16-11 26-27 26 0-16 11-26 27-26z" className="fill-accent-500" />
-      <path
-        d="M20.5 41.5 44.5 17.5"
-        className="stroke-canvas"
-        strokeWidth="3"
-        strokeLinecap="round"
-        fill="none"
-      />
-    </svg>
+    <img
+      src="/images/logos/ani-mark.png"
+      alt=""
+      width={36}
+      height={36}
+      // Loaded eagerly and decoded off the main thread: it is above the fold
+      // on every screen, so lazy-loading it only delays the header.
+      decoding="async"
+      className="size-9 shrink-0 object-contain"
+    />
   );
 }
 
@@ -61,7 +61,7 @@ export function AppHeader() {
       <div className="flex min-h-14 items-center gap-3 px-4">
         {isHome ? (
           <div className="flex min-w-0 items-center gap-2.5">
-            <LeafMark />
+            <MascotMark />
             <div className="min-w-0">
               <p className="text-xl font-extrabold leading-none tracking-tight text-ink">Ani</p>
               <p className="eyebrow mt-0.5 truncate text-[0.68rem]">Farm to table · Biliran</p>

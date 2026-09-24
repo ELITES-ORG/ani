@@ -211,12 +211,32 @@ feel like it is talking to someone else.
 
 ---
 
+## The mark
+
+Ani's mark is a rooster mascot. Which version to use depends entirely on how
+much room there is.
+
+| Surface | Asset | Why |
+|---|---|---|
+| Header, favicon, app icon | **Head crop** — `images/logos/ani-mark.png`, `icons/*` | At 32–48px the whole bird is a smudge. The head reads instantly |
+| Empty states with room | **Full body** — `images/logos/ani-mascot.webp` | 360px tall, 23KB |
+
+Source art and the exact crop are documented in
+[`brand/README.md`](../brand/README.md). The master PNG is **not** under
+`public/` — everything there is copied into the deploy as-is.
+
+**The mascot is not a product placeholder.** A product with no photo gets a
+leaf icon on a tinted block. A rooster on every photo-less vegetable would be
+noise, and it would stop the mark meaning "Ani".
+
 ## Images
 
 Product photos are the dominant performance risk, not JavaScript.
 
 - `loading="lazy"` and `decoding="async"` below the fold
 - Explicit dimensions or aspect ratio, so the list does not reflow
+- `.photo` on product imagery for the grey loading block. **Not** on logos or
+  anything with transparency — the background never goes away
 - No photo → a tinted block with a leaf icon, never a broken image
 - Never an emoji as a placeholder
 

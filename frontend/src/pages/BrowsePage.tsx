@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Sprout, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { useProducts } from '@/features/products/api';
 import { PRODUCT_CATEGORIES, type ProductCategory } from '@/features/products/types';
 import { ProductCardItem } from '@/components/ProductCardItem';
@@ -90,7 +90,16 @@ export function BrowsePage() {
           />
         ) : (
           <EmptyState
-            icon={<Sprout size={26} aria-hidden />}
+            illustration={
+              <img
+                src="/images/logos/ani-mascot.webp"
+                alt=""
+                width={122}
+                height={180}
+                decoding="async"
+                className="h-44 w-auto"
+              />
+            }
             title="No produce yet"
             description="No farms have listed anything so far. If you grow or catch something, you can be the first."
             action={

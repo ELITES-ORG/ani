@@ -74,9 +74,11 @@ button {
   color: var(--color-ink-muted);
 }
 
-img {
-  /* An image that has not loaded should hold its space rather than collapse
-     the layout and shove the page around as photos arrive. */
+/* A photo that has not loaded should hold its space rather than collapse the
+   layout and shove the page around as images arrive.
+   Applied per-image, not to every `img`: a blanket rule also paints a grey
+   box behind transparent artwork, where it never goes away. */
+.photo {
   background-color: var(--color-sunken);
 }
 

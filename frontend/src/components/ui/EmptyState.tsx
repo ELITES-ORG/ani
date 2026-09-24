@@ -2,6 +2,12 @@ import type { ReactNode } from 'react';
 
 interface EmptyStateProps {
   icon?: ReactNode;
+  /**
+   * A picture instead of the small icon badge. For the few screens where an
+   * empty result is the normal state rather than a dead end, and there is
+   * room to be warmer about it.
+   */
+  illustration?: ReactNode;
   title: string;
   description?: string;
   /** Always offer the next step. A dead end reads as a broken app. */
@@ -15,10 +21,11 @@ interface EmptyStateProps {
  * months. Someone who lands on one needs to be told what to do next, not
  * shown "no results".
  */
-export function EmptyState({ icon, title, description, action }: EmptyStateProps) {
+export function EmptyState({ icon, illustration, title, description, action }: EmptyStateProps) {
   return (
     <div className="page-enter flex flex-col items-center px-6 py-14 text-center">
-      {icon !== undefined && (
+      {illustration !== undefined && <div className="mb-5">{illustration}</div>}
+      {illustration === undefined && icon !== undefined && (
         <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-accent-50 text-accent-700">
           {icon}
         </div>

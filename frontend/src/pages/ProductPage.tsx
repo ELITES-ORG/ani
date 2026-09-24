@@ -50,7 +50,7 @@ export function ProductPage() {
         <img
           src={product.imageUrl}
           alt={product.name}
-          className="aspect-[4/3] w-full rounded-card object-cover"
+          className="photo aspect-[4/3] w-full rounded-card object-cover"
         />
       ) : (
         // Compact on purpose. A full-bleed empty box would push the name, the

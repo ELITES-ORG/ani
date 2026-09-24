@@ -27,7 +27,7 @@ export function ProductCardItem({ product }: { product: ProductCard }) {
           decoding="async"
           width={80}
           height={80}
-          className="size-20 shrink-0 rounded-card object-cover"
+          className="photo size-20 shrink-0 rounded-card object-cover"
         />
       ) : (
         <div
