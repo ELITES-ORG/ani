@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { composeFullName, readNameParts } from './name.js';
+import { composeFullName } from './name.js';
 
 describe('composeFullName', () => {
   it('is first then last', () => {
@@ -26,25 +26,3 @@ describe('composeFullName', () => {
   });
 });
 
-describe('readNameParts', () => {
-  it('returns the stored parts when both exist', () => {
-    expect(readNameParts({ firstName: 'Juan', lastName: 'Cruz', fullName: 'ignored' })).toEqual({
-      firstName: 'Juan',
-      lastName: 'Cruz',
-    });
-  });
-
-  it('falls back to the whole name for an account made by the previous release', () => {
-    expect(readNameParts({ firstName: null, lastName: null, fullName: 'Window Test' })).toEqual({
-      firstName: 'Window Test',
-      lastName: '',
-    });
-  });
-
-  it('never returns null, even with nothing to go on', () => {
-    expect(readNameParts({ firstName: null, lastName: null, fullName: null })).toEqual({
-      firstName: '',
-      lastName: '',
-    });
-  });
-});

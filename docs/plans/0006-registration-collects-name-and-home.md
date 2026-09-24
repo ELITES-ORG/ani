@@ -118,7 +118,7 @@ migrate — because until the new code is running, the old code still reads
 | 2. API | 3 / 3 | Complete |
 | 3. The form | 3 / 3 | Complete |
 | 4. Account screen and docs | 2 / 2 | Complete |
-| 5. Contract — separate release | 0 / 3 | Not started |
+| 5. Contract — separate release | 2 / 3 | In progress — built on `registration-contract`; step 5.3 is the deploy |
 
 ---
 
@@ -301,22 +301,26 @@ is only safe once nothing deployed reads `full_name`.
 
 ### Step 5.1 — Tighten the schema
 
-- [ ] **Action.** In `backend/src/db/schema/users.ts`, make `firstName` and
+- [x] **Action.** In `backend/src/db/schema/users.ts`, make `firstName` and
       `lastName` `.notNull()` and delete `fullName`. Generate the migration,
       then **prepend** the same backfill as release 1 — guarded by
       `first_name IS NULL` — so accounts the previous release created after
       release 1's migration ran are filled in before `SET NOT NULL`.
-- [ ] **Verify.** Against a database with an account whose `first_name` is
+- [x] **Verify.** Against a database with an account whose `first_name` is
       null, the migration succeeds and that account ends up with a name.
 
 ### Step 5.2 — Remove the scaffolding
 
-- [ ] **Action.** Stop writing `fullName` in `registerUser`, and delete
+- [x] **Action.** Stop writing `fullName` in `registerUser`, and delete
       `readNameParts` from `lib/name.ts` along with its tests; read the parts
       directly. `composeFullName` stays.
-- [ ] **Verify.** `grep -rn "fullName\|full_name\|readNameParts" backend/src`
+- [x] **Verify.** `grep -rn "fullName\|full_name\|readNameParts" backend/src`
       shows only `composeFullName`, the `CurrentUser.fullName` contract field,
       and nothing that touches the column.
+
+Rehearsed. In the window between merging and migrating, an account the
+previous release created in *its* gap reads with a blank name — no error, and
+the migration fills it in moments later. Every other account is unaffected.
 
 ### Step 5.3 — Deploy in the contract order
 
