@@ -1,6 +1,6 @@
 # 0006. Registration collects a full name and a home address
 
-- **Status:** In progress
+- **Status:** Complete
 - **Owner:** unassigned
 - **Related:** [plan 0005](./0005-sign-up-and-sign-in.md),
   [ADR 0006](../decisions/0006-username-password-auth-with-server-sessions.md),
@@ -118,7 +118,7 @@ migrate — because until the new code is running, the old code still reads
 | 2. API | 3 / 3 | Complete |
 | 3. The form | 3 / 3 | Complete |
 | 4. Account screen and docs | 2 / 2 | Complete |
-| 5. Contract — separate release | 2 / 3 | In progress — built on `registration-contract`; step 5.3 is the deploy |
+| 5. Contract — separate release | 3 / 3 | Complete |
 
 ---
 
@@ -324,9 +324,9 @@ the migration fills it in moments later. Every other account is unaffected.
 
 ### Step 5.3 — Deploy in the contract order
 
-- [ ] **Action.** Merge. Wait for Render to report the deploy *Live*. Then,
+- [x] **Action.** Merge. Wait for Render to report the deploy *Live*. Then,
       and only then, apply the migration to Supabase.
-- [ ] **Verify.** Before migrating, the new code signs in and registers
+- [x] **Verify.** Before migrating, the new code signs in and registers
       against the release-1 schema. After migrating, it still does, and
       `\d users` shows `first_name` and `last_name` `not null` and no
       `full_name`.
@@ -344,8 +344,14 @@ the migration fills it in moments later. Every other account is unaffected.
 - [x] The address appears in no contract but `me.ts`
 - [x] The form shows three sections and fits 360px
 - [x] `npm run typecheck && npm run lint && npm test && npm run docs:check`
-- [ ] **Release 1: the migration has been applied to Supabase before the merge**
-- [ ] Release 2 (phase 5) has shipped, merged **before** its migration was applied
+- [x] **Release 1: the migration has been applied to Supabase before the merge**
+- [x] Release 2 (phase 5) has shipped, merged **before** its migration was applied
+
+Shipped 2026-09-25. Release 1 (#2) migrated then merged; release 2 (#3) merged,
+confirmed live, then migrated. Verified on the live site after each: sign-in
+for an account created before either release, a new registration with every
+field, `/me` returning the derived name and home address, and a 400 for a
+missing last name.
 
 ## Follow-ups
 
