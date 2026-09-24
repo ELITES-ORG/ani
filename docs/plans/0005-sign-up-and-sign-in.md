@@ -1,6 +1,6 @@
 # 0005. Finish sign-up and sign-in
 
-- **Status:** Ready
+- **Status:** In progress
 - **Owner:** unassigned
 - **Related:** [ADR 0006](../decisions/0006-username-password-auth-with-server-sessions.md),
   [ADR 0007](../decisions/0007-one-account-selling-is-a-role.md),
@@ -82,10 +82,10 @@ None.
 
 | Phase | Steps | Status |
 |---|---|---|
-| 1. Return where you were | 0 / 3 | Not started |
-| 2. Signing out | 0 / 3 | Not started |
-| 3. When the session ends | 0 / 1 | Not started |
-| 4. Form errors | 0 / 2 | Not started |
+| 1. Return where you were | 3 / 3 | Done |
+| 2. Signing out | 3 / 3 | Done |
+| 3. When the session ends | 1 / 1 | Done |
+| 4. Form errors | 2 / 2 | Done |
 
 ---
 
@@ -93,12 +93,12 @@ None.
 
 ### Step 1.1 — A safe return path
 
-- [ ] **Action.** Add `frontend/src/lib/return-path.ts` exporting
+- [x] **Action.** Add `frontend/src/lib/return-path.ts` exporting
       `readReturnPath(search: string): string`. It reads the `next` query
       parameter and returns it **only** if it is an in-app path: begins with
       a single `/`, and does not begin with `//` or contain `:`. Anything
       else returns `/`.
-- [ ] **Verify.** Add `return-path.test.ts` next to it and run
+- [x] **Verify.** Add `return-path.test.ts` next to it and run
       `npm --prefix frontend test`. It must cover `/cart` → `/cart`,
       missing → `/`, `//evil.com` → `/`, `https://evil.com` → `/`,
       `javascript:alert(1)` → `/`.
@@ -110,25 +110,25 @@ it.
 
 ### Step 1.2 — Send the intent with the link
 
-- [ ] **Action.** Every "sign in" entry point passes where it came from:
+- [x] **Action.** Every "sign in" entry point passes where it came from:
       - `pages/CartPage.tsx` — `/login?next=/cart`
       - `pages/OrdersPage.tsx` — `/login?next=/orders`
       - `pages/SellPage.tsx` — `/login?next=/sell`
 
       Keep the existing copy. Only the `to` changes.
-- [ ] **Verify.** With an empty session, each screen's sign-in link lands on
+- [x] **Verify.** With an empty session, each screen's sign-in link lands on
       `/login?next=…`.
 
 ### Step 1.3 — Honour it on both forms
 
-- [ ] **Action.** In `pages/LoginPage.tsx` and `pages/RegisterPage.tsx`,
+- [x] **Action.** In `pages/LoginPage.tsx` and `pages/RegisterPage.tsx`,
       replace `navigate('/')` with the resolved return path, and pass
       `{ replace: true }`.
 
       Carry `next` between the two: the "Create one" and "Sign in" links at
       the bottom of each form must preserve it, or someone who switches form
       loses their place anyway.
-- [ ] **Verify.** Put something in the basket signed out, tap **Sign in to
+- [x] **Verify.** Put something in the basket signed out, tap **Sign in to
       order**, sign in. You land back on the basket **with the items still
       there**. Pressing Back does not return you to the sign-in form.
 
@@ -148,7 +148,7 @@ lives is a decision with consequences, not an implementation detail.
 
 ### Step 2.1 — The account screen
 
-- [ ] **Action.** Add `pages/AccountPage.tsx` at `/account`. It shows, for a
+- [x] **Action.** Add `pages/AccountPage.tsx` at `/account`. It shows, for a
       signed-in user: their name, username, mobile number, and whether they
       have a farm (and its status). Signed out, it shows an `EmptyState`
       offering sign-in — the same shape Orders already uses.
@@ -156,28 +156,28 @@ lives is a decision with consequences, not an implementation detail.
       Add `'/account': 'Your account'` to `TITLES` in
       `components/AppHeader.tsx`. It is **not** a tab, so it gets a back
       arrow automatically.
-- [ ] **Verify.** `/account` signed in shows your details; signed out it
+- [x] **Verify.** `/account` signed in shows your details; signed out it
       offers sign-in. `npm --prefix frontend run typecheck` passes.
 
 ### Step 2.2 — A way to reach it
 
-- [ ] **Action.** Add a right-aligned account button to `AppHeader`, visible
+- [x] **Action.** Add a right-aligned account button to `AppHeader`, visible
       on tab routes only, linking to `/account`. Minimum 44px, with an
       `aria-label`. Use `CircleUser` from `lucide-react`.
-- [ ] **Verify.** The button appears on all four tabs and not on sub-pages,
+- [x] **Verify.** The button appears on all four tabs and not on sub-pages,
       where the back arrow occupies that role. Check the home header still
       fits at 360px without the wordmark wrapping.
 
 ### Step 2.3 — Sign out
 
-- [ ] **Action.** On the account screen, a `danger` Button that opens
+- [x] **Action.** On the account screen, a `danger` Button that opens
       `ConfirmDialog` before calling the existing `useLogout`. On success,
       navigate to `/` with `{ replace: true }`.
 
       Title: "Sign out?" Description: say that the basket stays on this
       phone. Confirm: "Sign out". Cancel is the default and the wider
       target.
-- [ ] **Verify.** Sign out, then `curl` `/api/v1/me` with the old cookie →
+- [x] **Verify.** Sign out, then `curl` `/api/v1/me` with the old cookie →
       `401`. Orders shows its signed-out state. **The basket still has its
       items** — it is `localStorage`, per-device, and holds nothing personal.
 
@@ -191,7 +191,7 @@ shopping.
 
 ### Step 3.1 — A 401 means signed out, not broken
 
-- [ ] **Action.** In `frontend/src/lib/api-client.ts`, add an axios response
+- [x] **Action.** In `frontend/src/lib/api-client.ts`, add an axios response
       interceptor: on a `401`, set the cached current user to `null` via the
       query client, then re-throw so the calling hook still sees the error.
 
@@ -201,7 +201,7 @@ shopping.
 
       **Do not redirect.** Being thrown to a sign-in page mid-task is more
       alarming than the screen simply saying you are signed out.
-- [ ] **Verify.** Sign in, delete the `ani.sid` cookie in devtools, open
+- [x] **Verify.** Sign in, delete the `ani.sid` cookie in devtools, open
       Orders. You get the "Sign in to see your orders" empty state, not
       `ErrorNotice`.
 
@@ -211,36 +211,36 @@ shopping.
 
 ### Step 4.1 — Duplicate username
 
-- [ ] **Action.** The API answers a taken username with `409` and
+- [x] **Action.** The API answers a taken username with `409` and
       `"That username is already taken."` Show it as the `error` prop on the
-      username `TextField`, not only as the `ErrorNotice` at the bottom of
-      the form. Keep the notice for everything else.
-- [ ] **Verify.** Register `zz_web_check` (it exists in staging) or any
+      username `TextField`, not only as the `ErrorNotice` at the bottom of the
+      form. Keep the notice for everything else.
+- [x] **Verify.** Register `zz_web_check` (it exists in staging) or any
       local duplicate. The message appears under the username field and the
       field is outlined in `danger`.
 
 ### Step 4.2 — Username rules, client-side
 
-- [ ] **Action.** The server accepts `^[a-zA-Z0-9_.]+$`, 3–30 characters,
+- [x] **Action.** The server accepts `^[a-zA-Z0-9_.]+$`, 3–30 characters,
       and lowercases it. Mirror that in `RegisterPage` as a field error, and
       say in the hint that it will be saved in lowercase.
-- [ ] **Verify.** Typing `Juan Cruz` shows a field error naming what is
+- [x] **Verify.** Typing `Juan Cruz` shows a field error naming what is
       allowed, before submitting.
 
 ---
 
 ## Acceptance
 
-- [ ] Sign in from the basket returns to the basket, items intact
-- [ ] Back after signing in does not show the sign-in form
-- [ ] `/account` shows name, username, phone, and farm status
-- [ ] Sign out confirms first, and afterwards `/me` returns 401
-- [ ] The basket survives signing out
-- [ ] A deleted cookie produces a signed-out screen, not an error
-- [ ] A duplicate username is reported on the field
-- [ ] `npm run typecheck && npm run lint && npm test && npm run docs:check`
-- [ ] Every new screen checked at **360px**, all four data states handled
-- [ ] `docs/reference/api.md` unchanged — this plan adds no endpoints
+- [x] Sign in from the basket returns to the basket, items intact
+- [x] Back after signing in does not show the sign-in form
+- [x] `/account` shows name, username, phone, and farm status
+- [x] Sign out confirms first, and afterwards `/me` returns 401
+- [x] The basket survives signing out
+- [x] A deleted cookie produces a signed-out screen, not an error
+- [x] A duplicate username is reported on the field
+- [x] `npm run typecheck && npm run lint && npm test && npm run docs:check`
+- [x] Every new screen checked at **360px**, all four data states handled
+- [x] `docs/reference/api.md` unchanged — this plan adds no endpoints
 
 ## Follow-ups
 

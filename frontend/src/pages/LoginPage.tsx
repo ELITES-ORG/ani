@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { useLogin } from '@/features/auth/api';
+import { readReturnPath } from '@/lib/return-path';
 import { Button } from '@/components/ui/Button';
 import { ErrorNotice } from '@/components/ui/ErrorNotice';
 import { TextField } from '@/components/ui/Field';
@@ -12,12 +13,19 @@ export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const login = useLogin();
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnPath = readReturnPath(location.search);
+  const registerTo =
+    returnPath === '/' ? '/register' : `/register?next=${encodeURIComponent(returnPath)}`;
 
   return (
     <form
       onSubmit={(event) => {
         event.preventDefault();
-        login.mutate({ username: username.trim(), password }, { onSuccess: () => void navigate('/') });
+        login.mutate(
+          { username: username.trim(), password },
+          { onSuccess: () => void navigate(returnPath, { replace: true }) },
+        );
       }}
       className="space-y-5"
     >
@@ -68,7 +76,7 @@ export function LoginPage() {
 
       <p className="text-center text-base text-ink-muted">
         No account yet?{' '}
-        <Link to="/register" className="font-semibold text-accent-700 underline">
+        <Link to={registerTo} className="font-semibold text-accent-700 underline">
           Create one
         </Link>
       </p>

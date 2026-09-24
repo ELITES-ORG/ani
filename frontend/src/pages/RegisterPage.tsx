@@ -1,10 +1,14 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { useRegister } from '@/features/auth/api';
+import { readReturnPath } from '@/lib/return-path';
+import { ApiError } from '@/lib/api-client';
 import { Button } from '@/components/ui/Button';
 import { ErrorNotice } from '@/components/ui/ErrorNotice';
 import { TextField } from '@/components/ui/Field';
+
+const USERNAME_PATTERN = /^[a-zA-Z0-9_.]+$/;
 
 /**
  * One account for buying and selling.
@@ -22,19 +26,45 @@ export function RegisterPage() {
 
   const register = useRegister();
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnPath = readReturnPath(location.search);
+  const loginTo =
+    returnPath === '/' ? '/login' : `/login?next=${encodeURIComponent(returnPath)}`;
 
   // Validated as they go, but only complained about once there is something
   // to complain about — an error on an untouched field is just noise.
   const passwordTooShort = password !== '' && password.length < 8;
-  const usernameTooShort = username !== '' && username.trim().length < 3;
+  const trimmedUsername = username.trim();
+  const usernameTooShort = trimmedUsername !== '' && trimmedUsername.length < 3;
+  const usernameTooLong = trimmedUsername.length > 30;
+  const usernameBadChars =
+    trimmedUsername !== '' && !usernameTooShort && !USERNAME_PATTERN.test(trimmedUsername);
+
+  const usernameError = usernameTooShort
+    ? 'Use at least 3 characters.'
+    : usernameTooLong
+      ? 'Keep it to 30 characters or fewer.'
+      : usernameBadChars
+        ? 'Letters, numbers, underscores and dots only — no spaces.'
+        : undefined;
+
+  // Matched on the code, not the sentence: the API owns that copy, and a
+  // reword there must not silently move this error off the field.
+  const duplicateUsername =
+    register.error instanceof ApiError && register.error.code === 'CONFLICT'
+      ? register.error.message
+      : undefined;
+
+  const fieldUsernameError = usernameError ?? duplicateUsername;
 
   return (
     <form
       onSubmit={(event) => {
         event.preventDefault();
+        if (usernameError !== undefined) return;
         register.mutate(
-          { fullName: fullName.trim(), username: username.trim(), phone: phone.trim(), password },
-          { onSuccess: () => void navigate('/') },
+          { fullName: fullName.trim(), username: trimmedUsername, phone: phone.trim(), password },
+          { onSuccess: () => void navigate(returnPath, { replace: true }) },
         );
       }}
       className="space-y-5"
@@ -50,16 +80,25 @@ export function RegisterPage() {
 
       <TextField
         label="Username"
-        hint="What you will type to sign in. Letters and numbers, no spaces."
+        hint="What you will type to sign in. Letters, numbers, underscores and dots — saved in lowercase."
         value={username}
-        onChange={(event) => setUsername(event.target.value)}
+        onChange={(event) => {
+          setUsername(event.target.value);
+          if (register.isError) register.reset();
+        }}
         autoComplete="username"
         autoCapitalize="none"
         autoCorrect="off"
         spellCheck={false}
         required
         minLength={3}
-        {...(usernameTooShort && { error: 'Use at least 3 characters.' })}
+        maxLength={30}
+        // Without this the browser reports "Juan Cruz" as valid, the submit
+        // handler bails silently, and the button does nothing at all — the
+        // dead control ADR 0016 exists to prevent. With it, the browser
+        // blocks the submit and moves focus to this field.
+        pattern="[a-zA-Z0-9_.]+"
+        {...(fieldUsernameError !== undefined && { error: fieldUsernameError })}
       />
 
       <TextField
@@ -97,7 +136,10 @@ export function RegisterPage() {
         </button>
       </div>
 
-      {register.isError && <ErrorNotice error={register.error} />}
+      {/* Duplicate username lands on the field; everything else stays here. */}
+      {register.isError && duplicateUsername === undefined && (
+        <ErrorNotice error={register.error} />
+      )}
 
       {/*
         Not disabled until the form is valid. A greyed-out button that does
@@ -117,7 +159,7 @@ export function RegisterPage() {
 
       <p className="text-center text-base text-ink-muted">
         Already have an account?{' '}
-        <Link to="/login" className="font-semibold text-accent-700 underline">
+        <Link to={loginTo} className="font-semibold text-accent-700 underline">
           Sign in
         </Link>
       </p>

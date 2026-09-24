@@ -1,5 +1,5 @@
-import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { ArrowLeft, CircleUser } from 'lucide-react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
 /**
@@ -15,6 +15,7 @@ const TITLES: Record<string, string> = {
   '/sell/register': 'Register your farm',
   '/login': 'Sign in',
   '/register': 'Create an account',
+  '/account': 'Your account',
 };
 
 /**
@@ -60,7 +61,7 @@ export function AppHeader() {
     <header className="sticky top-0 z-20 border-b border-border bg-canvas/95 backdrop-blur-sm">
       <div className="flex min-h-14 items-center gap-3 px-4">
         {isHome ? (
-          <div className="flex min-w-0 items-center gap-2.5">
+          <div className="flex min-w-0 flex-1 items-center gap-2.5">
             <MascotMark />
             <div className="min-w-0">
               <p className="text-xl font-extrabold leading-none tracking-tight text-ink">Ani</p>
@@ -82,8 +83,22 @@ export function AppHeader() {
                 <ArrowLeft size={22} aria-hidden />
               </button>
             )}
-            <h1 className="min-w-0 truncate text-lg font-bold text-ink">{title ?? 'Ani'}</h1>
+            <h1 className="min-w-0 flex-1 truncate text-lg font-bold text-ink">{title ?? 'Ani'}</h1>
           </>
+        )}
+
+        {/*
+          Account is not a fifth tab (ADR 0013). On tab routes only: sub-pages
+          already use this corner for the back arrow.
+        */}
+        {isTab && (
+          <Link
+            to="/account"
+            aria-label="Your account"
+            className="pressable -mr-2 flex size-11 shrink-0 items-center justify-center rounded-control text-ink active:bg-sunken"
+          >
+            <CircleUser size={22} aria-hidden />
+          </Link>
         )}
       </div>
     </header>

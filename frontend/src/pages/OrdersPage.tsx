@@ -26,7 +26,7 @@ export function OrdersPage() {
         title="Sign in to see your orders"
         description="Your orders and their progress live in your account."
         action={
-          <Link to="/login" className="block">
+          <Link to="/login?next=/orders" className="block">
             <Button>Sign in</Button>
           </Link>
         }

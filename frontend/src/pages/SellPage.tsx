@@ -34,7 +34,7 @@ export function SellPage() {
         title="Sell your harvest on Ani"
         description="Sign in first, then register your farm. It takes a few minutes."
         action={
-          <Link to="/login" className="block">
+          <Link to="/login?next=/sell" className="block">
             <Button>Sign in</Button>
           </Link>
         }

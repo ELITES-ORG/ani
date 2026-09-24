@@ -7,6 +7,9 @@ interface ConfirmDialogProps {
   /** Say what will happen in plain words, not "are you sure?". */
   description?: string;
   confirmLabel: string;
+  /** Shown on the confirm button while the action is running. */
+  confirmLoading?: boolean;
+  confirmLoadingLabel?: string;
   cancelLabel?: string;
   destructive?: boolean;
   onConfirm: () => void;
@@ -28,6 +31,8 @@ export function ConfirmDialog({
   title,
   description,
   confirmLabel,
+  confirmLoading = false,
+  confirmLoadingLabel,
   cancelLabel = 'Keep it',
   destructive = false,
   onConfirm,
@@ -52,10 +57,12 @@ export function ConfirmDialog({
       // Escape and the backdrop both mean "no". Never let them mean "yes".
       onCancel={(event) => {
         event.preventDefault();
-        onCancel();
+        // Escape must not abandon a request that is already in flight: the
+        // action would still complete, with the UI pretending it had not.
+        if (!confirmLoading) onCancel();
       }}
       onClick={(event) => {
-        if (event.target === ref.current) onCancel();
+        if (event.target === ref.current && !confirmLoading) onCancel();
       }}
       className={[
         'm-auto w-[min(22rem,calc(100vw-2rem))] rounded-sheet border border-border',
@@ -69,10 +76,15 @@ export function ConfirmDialog({
       )}
 
       <div className="mt-5 flex flex-col gap-2">
-        <Button variant="secondary" onClick={onCancel}>
+        <Button variant="secondary" onClick={onCancel} disabled={confirmLoading}>
           {cancelLabel}
         </Button>
-        <Button variant={destructive ? 'danger' : 'primary'} onClick={onConfirm}>
+        <Button
+          variant={destructive ? 'danger' : 'primary'}
+          onClick={onConfirm}
+          loading={confirmLoading}
+          {...(confirmLoadingLabel !== undefined && { loadingLabel: confirmLoadingLabel })}
+        >
           {confirmLabel}
         </Button>
       </div>
