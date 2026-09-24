@@ -10,6 +10,9 @@ html {
   -webkit-text-size-adjust: 100%;
   /* Anchor scrolling clears the sticky header. */
   scroll-padding-top: 5rem;
+  /* Shows behind the page snapshots while a view transition runs. Left to the
+     browser default it is white, and the gap flashes lighter than the canvas. */
+  background: var(--color-canvas);
 }
 
 body {
@@ -142,5 +145,19 @@ button {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  /* lib/view-transitions.ts already skips the transition under this setting.
+     This is the guard for one that starts anyway — a back navigation replaying
+     a transition from before the setting changed. `*` does not match these
+     pseudo-elements, so they need naming, and the old snapshot is hidden so it
+     cannot show through the new page while nothing animates it away. */
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+  ::view-transition-old(*) {
+    opacity: 0;
   }
 }

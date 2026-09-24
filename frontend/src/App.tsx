@@ -1,6 +1,7 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider, createBrowserRouter } from 'react-router-dom';
 import { queryClient } from '@/lib/query-client';
+import { withViewTransitions } from '@/lib/view-transitions';
 import { CartProvider } from '@/hooks/useCart';
 import { PageTitleProvider } from '@/hooks/usePageTitle';
 import { AppLayout } from '@/components/AppLayout';
@@ -15,7 +16,7 @@ import { RegisterPage } from '@/pages/RegisterPage';
 import { AccountPage } from '@/pages/AccountPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 
-const router = createBrowserRouter([
+const router = withViewTransitions(createBrowserRouter([
   {
     path: '/',
     element: <AppLayout />,
@@ -36,7 +37,7 @@ const router = createBrowserRouter([
       { path: '*', element: <NotFoundPage /> },
     ],
   },
-]);
+]));
 
 export function App() {
   return (
