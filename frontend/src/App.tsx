@@ -12,6 +12,7 @@ import { SellPage } from '@/pages/SellPage';
 import { VendorRegisterPage } from '@/pages/VendorRegisterPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { RegisterPage } from '@/pages/RegisterPage';
+import { AccountPage } from '@/pages/AccountPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 
 const router = createBrowserRouter([
@@ -31,6 +32,7 @@ const router = createBrowserRouter([
 
       { path: 'login', element: <LoginPage /> },
       { path: 'register', element: <RegisterPage /> },
+      { path: 'account', element: <AccountPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

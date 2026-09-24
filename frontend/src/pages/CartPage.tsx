@@ -131,7 +131,7 @@ export function CartPage() {
         </div>
       ) : (
         <div className="space-y-2">
-          <Link to="/login" className="block">
+          <Link to="/login?next=/cart" className="block">
             <Button size="lg">Sign in to order</Button>
           </Link>
           <p className="text-center text-sm text-ink-muted">
