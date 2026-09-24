@@ -20,6 +20,12 @@ change.** ([ADR 0016](../docs/decisions/0016-the-interface-assumes-no-app-litera
 
 ## Tokens only
 
+**`base.css` and `motion.css` are imported into Tailwind's layers**
+(`index.css`). Never add an unlayered rule for an element: unlayered CSS beats
+every utility whatever its specificity. An unlayered `button { font: inherit }`
+once made every button in the app render at body weight, whatever its classes
+said.
+
 Every colour, size, radius, shadow and easing comes from
 `src/styles/theme.css`. A one-off is always a token that has not been added
 yet.
@@ -97,6 +103,12 @@ Figtree, self-hosted, one variable file covering 400–900
 | Body | `text-base` |
 | Secondary | `text-sm text-ink-muted` |
 | Price | `tnum text-lg font-extrabold text-accent-800` |
+| Action label | `font-bold tracking-control` — `Button` applies it |
+| Inline link | `font-bold text-accent-700 underline decoration-accent-400 decoration-2 underline-offset-4` |
+
+**Anything you press is bold.** A semibold label on a coloured box reads as
+text that happens to sit there; bold reads as a thing to tap. Field labels are
+semibold, so the button is always one step above them.
 
 Weights carry the hierarchy, not sizes. There are six sizes on purpose — more
 steps means *less* hierarchy, not more.
@@ -122,7 +134,10 @@ between cards, `space-y-5`–`space-y-6` between sections.
 | `rounded-full` | Pills and badges only |
 
 Shadows are shallow and tinted with ink, never black. `shadow-card` on resting
-surfaces, `shadow-dialog` on modals. A heavy drop shadow is the fastest way to
+surfaces, `shadow-dialog` on modals. The primary button uses `shadow-control`
+— a lit top edge and a darker bottom lip, so it reads as a key rather than a
+flat slab — and swaps to `shadow-control-pressed` while held. Secondary uses
+`shadow-control-quiet`. A heavy drop shadow is the fastest way to
 look like a template.
 
 ---

@@ -24,12 +24,20 @@ interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'chi
  * a cheap screen outdoors. Ink on the same green is 6.2:1.
  */
 const VARIANTS: Record<Variant, string> = {
-  primary: 'bg-accent-500 text-ink shadow-card hover:bg-accent-400 active:bg-accent-600',
-  secondary: 'bg-surface text-ink border border-border-strong hover:bg-accent-50',
+  primary:
+    'bg-accent-500 text-ink shadow-control hover:bg-accent-400 active:bg-accent-600 active:shadow-control-pressed',
+  secondary:
+    'bg-surface text-ink border border-border-strong shadow-control-quiet hover:bg-accent-50 active:shadow-none',
   quiet: 'bg-transparent text-accent-700 hover:bg-accent-50',
   danger: 'bg-danger-soft text-danger border border-danger/25 hover:bg-danger hover:text-white',
 };
 
+/**
+ * The label is bold, not semibold. At 16px on a dim LCD, semibold Figtree
+ * reads as ordinary text sitting on a coloured box; bold reads as a thing to
+ * press. The weight step also puts buttons clearly above field labels, which
+ * are semibold.
+ */
 const SIZES: Record<Size, string> = {
   md: 'min-h-12 px-4 text-base',
   lg: 'min-h-14 px-5 text-lg',
@@ -54,7 +62,7 @@ export function Button({
       // Tells a screen reader the control is busy rather than simply gone.
       aria-busy={loading || undefined}
       className={cn(
-        'pressable inline-flex items-center justify-center gap-2 rounded-control font-semibold',
+        'pressable inline-flex items-center justify-center gap-2 rounded-control font-bold tracking-control',
         'disabled:cursor-not-allowed disabled:opacity-55',
         VARIANTS[variant],
         SIZES[size],

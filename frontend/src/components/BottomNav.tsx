@@ -64,7 +64,7 @@ export function BottomNav({ basketCount }: { basketCount: number }) {
                       </span>
                     )}
                   </span>
-                  <span className={cn('text-xs', isActive ? 'font-bold' : 'font-medium')}>
+                  <span className={cn('text-xs', isActive ? 'font-extrabold' : 'font-semibold')}>
                     {label}
                   </span>
                   {to === '/cart' && basketCount > 0 && (

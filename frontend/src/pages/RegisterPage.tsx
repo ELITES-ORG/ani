@@ -270,7 +270,7 @@ export function RegisterPage() {
 
       <p className="text-center text-base text-ink-muted">
         Already have an account?{' '}
-        <Link to={loginTo} className="font-semibold text-accent-700 underline">
+        <Link to={loginTo} className="font-bold text-accent-700 underline decoration-accent-400 decoration-2 underline-offset-4">
           Sign in
         </Link>
       </p>

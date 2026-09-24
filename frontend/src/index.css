@@ -1,4 +1,13 @@
 @import 'tailwindcss';
 @import './styles/theme.css';
-@import './styles/base.css';
-@import './styles/motion.css';
+/*
+ * Both sheets go into Tailwind's layers, never unlayered.
+ *
+ * Unlayered CSS beats every layer regardless of specificity, so the old
+ * unlayered `button { font: inherit; color: inherit }` silently overrode every
+ * utility on every button — `font-semibold`, `text-sm`, `text-ink-muted` — and
+ * all of them rendered at body weight, 16px, full ink. Layered, a utility on
+ * the element wins, which is what anyone reading the markup expects.
+ */
+@import './styles/base.css' layer(base);
+@import './styles/motion.css' layer(components);

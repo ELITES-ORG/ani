@@ -76,7 +76,7 @@ export function LoginPage() {
 
       <p className="text-center text-base text-ink-muted">
         No account yet?{' '}
-        <Link to={registerTo} className="font-semibold text-accent-700 underline">
+        <Link to={registerTo} className="font-bold text-accent-700 underline decoration-accent-400 decoration-2 underline-offset-4">
           Create one
         </Link>
       </p>
