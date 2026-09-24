@@ -32,6 +32,37 @@ Conventions that are not optional:
 - **Indexes are declared in the table's second argument**, and named after
   what they serve.
 
+## 1a. Decide whether this is one release or two
+
+Merging to `main` auto-deploys the API, and Render's pre-deploy command is a
+paid feature, so **the database and the code never change at the same
+instant**. For some window — a minute or two — one of them is ahead of the
+other. Every schema change has to be safe in that window.
+
+| The change | Releases | Order |
+|---|---|---|
+| Add a table, or a **nullable** column | One | Migrate, then merge |
+| Add a `NOT NULL` column | Two | Add it nullable (release 1); backfill and tighten (release 2) |
+| Drop or rename a column the code reads | Two | Stop reading it (release 1); drop it (release 2) |
+| Make an existing column `NOT NULL` | Two | Start writing it everywhere (release 1); tighten (release 2) |
+
+**Expand, then contract.** Release 1 only *adds* and *loosens*, and the new
+code must work against the database both before and after that migration —
+while the old code, still deployed, must keep working against it too. Migrate,
+then merge. Release 2 *removes* and *tightens*, once nothing deployed reads the
+old shape. The order flips: **merge, wait for Render to show Live, then
+migrate.**
+
+A migration that drops a column the running code selects takes that endpoint
+down until the new code is live. [Plan 0006](../plans/0006-registration-collects-name-and-home.md)
+nearly shipped exactly that — dropping `full_name` returned `500` on sign-in in
+rehearsal — and was split into two releases as a result.
+
+**Rehearse it.** Before the first release, check out `main`, migrate a fresh
+database, create a few rows through the real API, apply your migration, and
+confirm the *old* code still works. That test is the whole point: a fresh
+`db:reset` only proves the end state, never the window.
+
 ## 2. Generate the migration
 
 ```bash
@@ -70,6 +101,8 @@ in the same pull request.
 
 ## Checklist
 
+- [ ] One release or two decided (§1a); if two, this PR only adds and loosens
+- [ ] Old code rehearsed against the migrated database, not just a fresh reset
 - [ ] Money in integer centavos, named `*_centavos`
 - [ ] Quantities `numeric` with `mode: 'number'`
 - [ ] Timestamps `withTimezone: true`

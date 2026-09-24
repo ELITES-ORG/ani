@@ -1,5 +1,5 @@
 {
-  "id": "0c614c6c-ea66-44cc-8eed-a90902254b59",
+  "id": "442c452d-7ac1-4c3a-8e41-5bd273412f5a",
   "prevId": "878c9e50-d5f0-4355-a81f-506aac708775",
   "version": "7",
   "dialect": "postgresql",
@@ -27,12 +27,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "full_name": {
-          "name": "full_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
         "first_name": {
           "name": "first_name",
           "type": "text",
@@ -53,6 +47,12 @@
         },
         "suffix": {
           "name": "suffix",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "full_name": {
+          "name": "full_name",
           "type": "text",
           "primaryKey": false,
           "notNull": false

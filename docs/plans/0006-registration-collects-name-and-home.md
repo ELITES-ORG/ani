@@ -1,6 +1,6 @@
 # 0006. Registration collects a full name and a home address
 
-- **Status:** Done
+- **Status:** In progress
 - **Owner:** unassigned
 - **Related:** [plan 0005](./0005-sign-up-and-sign-in.md),
   [ADR 0006](../decisions/0006-username-password-auth-with-server-sessions.md),
@@ -71,32 +71,54 @@ at sign-up" was meant to prevent.
 
 None.
 
-## ⚠️ Deployment sequencing — read before you merge
+## ⚠️ Deployment sequencing — two releases, not one
 
-Merging to `main` **auto-deploys** the API, and Render's Pre-Deploy command is
-a paid feature, so migrations do not run themselves
-([deployments](../reference/deployments.md)).
+**An earlier version of this section was wrong, and would have broken sign-in
+on the live site.** It said migrating before the merge was safe because
+nullable columns are backward compatible. That is true of adding columns and
+false of dropping one: the version of this plan that shipped both in one
+release, with `full_name` dropped, made the running API return `500` on login
+and registration until the new code deployed. Rehearsed and confirmed, not
+theorised. The other order fails too — new code selects columns that do not
+exist yet.
 
-Apply the migration to Supabase **before** merging:
+A change that **removes or tightens** something the deployed code depends on
+cannot be one release on this setup: merging auto-deploys, and Render's
+pre-deploy command is paid, so the database and the code never change at the
+same instant. It has to be two, with a period where **both** the old and new
+code run correctly against the same database.
+See [change the database schema](../guides/change-the-database-schema.md).
 
-```powershell
-$env:DATABASE_URL = "<the session pooler URI>"
-npm --prefix backend run db:migrate
-```
+**Release 1 — expand** (phases 1–4). Add, never remove.
 
-Adding nullable columns is backward compatible — the currently deployed code
-ignores them — so migrating first is safe and leaves no window where the API
-is newer than its database. Do it the other way round and registration 500s
-until someone notices.
+1. Apply the migration to Supabase **before** merging:
+
+   ```powershell
+   $env:DATABASE_URL = "<the session pooler URI>"
+   npm --prefix backend run db:migrate
+   ```
+
+2. Merge. Render deploys the new code.
+
+Rehearsed against a database holding accounts created by the previous
+release: with the expand migration applied, the **old** code still signed
+in, served `/me`, and registered with its old form; the **new** code signed
+in both backfilled accounts and an account the old code created in between.
+
+**Release 2 — contract** (phase 5). Remove what nothing reads any more.
+The order flips: **merge first**, wait for Render to show *Live*, **then**
+migrate — because until the new code is running, the old code still reads
+`full_name`.
 
 ## Progress
 
 | Phase | Steps | Status |
 |---|---|---|
-| 1. Schema | 3 / 3 | Done |
-| 2. API | 3 / 3 | Done |
-| 3. The form | 3 / 3 | Done |
-| 4. Account screen and docs | 2 / 2 | Done |
+| 1. Schema — expand | 2 / 2 | Complete |
+| 2. API | 3 / 3 | Complete |
+| 3. The form | 3 / 3 | Complete |
+| 4. Account screen and docs | 2 / 2 | Complete |
+| 5. Contract — separate release | 0 / 3 | Not started |
 
 ---
 
@@ -138,19 +160,14 @@ until someone notices.
       `select full_name, first_name, last_name from users;` splits
       `Juan Dela Cruz` into `Juan` / `Dela Cruz`.
 
-### Step 1.3 — Make the name required, drop the old column
+**Location stays nullable permanently.** It cannot be backfilled — nobody
+knows where the existing accounts live — so it is required by the API for new
+registrations and null for accounts that predate this. A `NOT NULL` would mean
+inventing an address for someone, which is worse than an empty one.
 
-- [x] **Action.** A second migration: `SET NOT NULL` on `first_name` and
-      `last_name`, then `DROP COLUMN full_name`.
-
-      **Location stays nullable.** It cannot be backfilled — nobody knows
-      where the existing accounts live — so it is required by the API for new
-      registrations and null for accounts that predate this. A `NOT NULL`
-      here would mean inventing an address for someone, which is worse than
-      an empty one.
-- [x] **Verify.** `npm run db:reset && npm run db:migrate && npm run db:seed`
-      succeeds from nothing, and `\d users` shows `first_name` and
-      `last_name` as `not null` with no `full_name`.
+`first_name` and `last_name` are nullable **in the database** during release 1
+and become `NOT NULL` in [phase 5](#phase-5--contract-a-separate-release-after-release-1-is-live).
+The API requires both on every new registration regardless.
 
 ---
 
@@ -276,6 +293,42 @@ farm can deliver an order, and that is the only thing it is for.
 
 ---
 
+## Phase 5 — Contract: a separate release, after release 1 is live
+
+**Do not start until release 1 is merged, deployed, and its migration has been
+applied to Supabase.** This phase removes the transition scaffolding, and it
+is only safe once nothing deployed reads `full_name`.
+
+### Step 5.1 — Tighten the schema
+
+- [ ] **Action.** In `backend/src/db/schema/users.ts`, make `firstName` and
+      `lastName` `.notNull()` and delete `fullName`. Generate the migration,
+      then **prepend** the same backfill as release 1 — guarded by
+      `first_name IS NULL` — so accounts the previous release created after
+      release 1's migration ran are filled in before `SET NOT NULL`.
+- [ ] **Verify.** Against a database with an account whose `first_name` is
+      null, the migration succeeds and that account ends up with a name.
+
+### Step 5.2 — Remove the scaffolding
+
+- [ ] **Action.** Stop writing `fullName` in `registerUser`, and delete
+      `readNameParts` from `lib/name.ts` along with its tests; read the parts
+      directly. `composeFullName` stays.
+- [ ] **Verify.** `grep -rn "fullName\|full_name\|readNameParts" backend/src`
+      shows only `composeFullName`, the `CurrentUser.fullName` contract field,
+      and nothing that touches the column.
+
+### Step 5.3 — Deploy in the contract order
+
+- [ ] **Action.** Merge. Wait for Render to report the deploy *Live*. Then,
+      and only then, apply the migration to Supabase.
+- [ ] **Verify.** Before migrating, the new code signs in and registers
+      against the release-1 schema. After migrating, it still does, and
+      `\d users` shows `first_name` and `last_name` `not null` and no
+      `full_name`.
+
+---
+
 ## Acceptance
 
 - [x] A new account cannot be created without first name, last name,
@@ -287,7 +340,8 @@ farm can deliver an order, and that is the only thing it is for.
 - [x] The address appears in no contract but `me.ts`
 - [x] The form shows three sections and fits 360px
 - [x] `npm run typecheck && npm run lint && npm test && npm run docs:check`
-- [ ] **The migration has been applied to Supabase before the merge**
+- [ ] **Release 1: the migration has been applied to Supabase before the merge**
+- [ ] Release 2 (phase 5) has shipped, merged **before** its migration was applied
 
 ## Follow-ups
 

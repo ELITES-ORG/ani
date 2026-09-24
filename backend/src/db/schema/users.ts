@@ -20,10 +20,21 @@ export const users = pgTable(
     // Parts rather than a single full_name: a farm needs to know who is
     // collecting, and "first last" is how a name is said out loud here.
     // middle_name is often the mother's maiden surname.
-    firstName: text('first_name').notNull(),
+    //
+    // EXPAND PHASE (plan 0006). first_name and last_name are nullable in the
+    // database for now, and full_name is still here and still written. That
+    // is what lets the code currently deployed and this code run against the
+    // same database: the old code writes full_name and never sets first_name,
+    // the new code writes both. The contract step makes first/last NOT NULL
+    // and drops full_name, once nothing deployed reads it. The API still
+    // requires first and last names on every new registration.
+    firstName: text('first_name'),
     middleName: text('middle_name'),
-    lastName: text('last_name').notNull(),
+    lastName: text('last_name'),
     suffix: text('suffix'),
+
+    /** Deprecated: composed from the parts. Removed in the contract step. */
+    fullName: text('full_name'),
 
     // Mobile number in +63 form. The primary way people reach each other here.
     phone: text('phone').notNull(),

@@ -12,15 +12,8 @@
     {
       "idx": 1,
       "version": "7",
-      "when": 1790254252194,
-      "tag": "0001_noisy_shadowcat",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1790254345890,
-      "tag": "0002_chilly_kabuki",
+      "when": 1790287046360,
+      "tag": "0001_expand_name_and_home",
       "breakpoints": true
     }
   ]

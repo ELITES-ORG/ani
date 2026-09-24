@@ -4,6 +4,7 @@ import { barangays, municipalities, users, vendors } from '../../db/schema/index
 import { AppError } from '../../lib/http-error.js';
 import { resolveMunicipalityBarangay } from '../../lib/geography.js';
 import { hashPassword, verifyPassword } from '../../lib/password.js';
+import { composeFullName, readNameParts } from '../../lib/name.js';
 import type { CurrentUser } from '../../contracts/me.js';
 
 type UserRow = typeof users.$inferSelect;
@@ -20,20 +21,6 @@ export interface RegisterInput {
   addressDetail: string;
   phone: string;
   email?: string | undefined;
-}
-
-/**
- * How a name is said out loud here: first last, then the suffix if any.
- * Middle name is kept on the account but left out of the spoken form.
- */
-export function composeFullName(parts: {
-  firstName: string;
-  lastName: string;
-  suffix: string | null;
-}): string {
-  const base = `${parts.firstName} ${parts.lastName}`.trim();
-  if (parts.suffix === null || parts.suffix === '') return base;
-  return `${base} ${parts.suffix}`;
 }
 
 export async function registerUser(input: RegisterInput): Promise<UserRow> {
@@ -58,6 +45,14 @@ export async function registerUser(input: RegisterInput): Promise<UserRow> {
       middleName: input.middleName ?? null,
       lastName: input.lastName,
       suffix: input.suffix ?? null,
+      // Still written during the expand phase so the previous release, which
+      // reads only full_name, sees a real name if it is running or rolled
+      // back to. Removed in the contract step.
+      fullName: composeFullName({
+        firstName: input.firstName,
+        lastName: input.lastName,
+        suffix: input.suffix ?? null,
+      }),
       municipalityId: municipality.id,
       barangayId: barangay.id,
       addressDetail: input.addressDetail,
@@ -108,18 +103,16 @@ export async function currentUser(user: UserRow): Promise<CurrentUser> {
     }
   }
 
+  const { firstName, lastName } = readNameParts(user);
+
   return {
     id: user.id,
     username: user.username,
-    fullName: composeFullName({
-      firstName: user.firstName,
-      lastName: user.lastName,
-      suffix: user.suffix,
-    }),
+    fullName: composeFullName({ firstName, lastName, suffix: user.suffix }),
     name: {
-      first: user.firstName,
+      first: firstName,
       middle: user.middleName,
-      last: user.lastName,
+      last: lastName,
       suffix: user.suffix,
     },
     phone: user.phone,
