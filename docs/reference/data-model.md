@@ -23,8 +23,7 @@ role added later ([ADR 0007](../decisions/0007-one-account-selling-is-a-role.md)
 | `id` | uuid pk | |
 | `username` | text unique | Lowercased at write time |
 | `password_hash` | text | Argon2id |
-| `first_name`, `last_name` | text | Required by the API. **Nullable in the database until plan 0006's contract release**, which backfills and tightens them |
-| `full_name` | text null | **Deprecated.** Still written, composed from the parts, so the previous release keeps working. Dropped in the contract release |
+| `first_name`, `last_name` | text | Required |
 | `middle_name`, `suffix` | text null | Optional. Middle is often the mother's maiden surname |
 | `phone` | text | `+63` E.164. Not a login credential |
 | `email` | text null | Many users have none |
