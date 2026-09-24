@@ -19,21 +19,16 @@ const TITLES: Record<string, string> = {
 };
 
 /**
- * The mascot mark.
+ * The mascot mark in the home header.
  *
- * A crop of the rooster's head rather than the whole character. At the 36px
- * this renders at, a full-body mascot would be about six pixels of head —
- * the crop is the only version that reads. Same crop as the app icon, so the
- * thing on the home screen and the thing at the top of the page are
- * recognisably one product.
- *
- * Dimensions are explicit: an unsized image in a flex row reflows the
- * wordmark sideways when it loads.
+ * Head crop with transparent background so it sits on the light canvas
+ * without a black square. Sized explicitly: an unsized image in a flex row
+ * reflows the wordmark sideways when it loads.
  */
 function MascotMark() {
   return (
     <img
-      src="/images/logos/ani-mark.png"
+      src="/images/logos/top_navbar_logo.png"
       alt=""
       width={36}
       height={36}
