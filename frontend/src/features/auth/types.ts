@@ -8,7 +8,13 @@ export interface Credentials {
 }
 
 export interface RegistrationDetails extends Credentials {
-  fullName: string;
+  firstName: string;
+  middleName?: string;
+  lastName: string;
+  suffix?: string;
+  municipalitySlug: string;
+  barangaySlug: string;
+  addressDetail: string;
   phone: string;
   email?: string;
 }

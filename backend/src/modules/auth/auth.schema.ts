@@ -22,6 +22,14 @@ export const phoneSchema = z
   })
   .transform((national) => `+63${national}`);
 
+const optionalTrimmed = (max: number) =>
+  z.preprocess((value) => {
+    if (value === undefined || value === null) return undefined;
+    if (typeof value !== 'string') return value;
+    const trimmed = value.trim();
+    return trimmed === '' ? undefined : trimmed;
+  }, z.string().min(1).max(max).optional());
+
 export const registerBody = z.object({
   username: z
     .string()
@@ -31,7 +39,13 @@ export const registerBody = z.object({
     .regex(/^[a-zA-Z0-9_.]+$/, 'Letters, numbers, underscore and dot only')
     .transform((value) => value.toLowerCase()),
   password: z.string().min(8, 'Use at least 8 characters').max(200),
-  fullName: z.string().trim().min(2).max(120),
+  firstName: z.string().trim().min(1).max(60),
+  middleName: optionalTrimmed(60),
+  lastName: z.string().trim().min(1).max(60),
+  suffix: optionalTrimmed(10),
+  municipalitySlug: z.string().trim().min(1),
+  barangaySlug: z.string().trim().min(1),
+  addressDetail: z.string().trim().min(1).max(200),
   phone: phoneSchema,
   email: z.string().trim().email().optional(),
 });

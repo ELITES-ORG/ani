@@ -23,9 +23,12 @@ role added later ([ADR 0007](../decisions/0007-one-account-selling-is-a-role.md)
 | `id` | uuid pk | |
 | `username` | text unique | Lowercased at write time |
 | `password_hash` | text | Argon2id |
-| `full_name` | text | |
+| `first_name`, `last_name` | text | Required |
+| `middle_name`, `suffix` | text null | Optional. Middle is often the mother's maiden surname |
 | `phone` | text | `+63` E.164. Not a login credential |
 | `email` | text null | Many users have none |
+| `municipality_id`, `barangay_id` | uuid null → geography | Home address. Null for accounts that predate collecting it |
+| `address_detail` | text null | Purok, house number, or a landmark. Personal data — only on `CurrentUser` |
 | `is_admin` | boolean | |
 | `suspended_at` | timestamptz null | Checked on every authenticated request |
 

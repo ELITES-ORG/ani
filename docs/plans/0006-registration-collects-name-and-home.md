@@ -1,6 +1,6 @@
 # 0006. Registration collects a full name and a home address
 
-- **Status:** Ready
+- **Status:** Done
 - **Owner:** unassigned
 - **Related:** [plan 0005](./0005-sign-up-and-sign-in.md),
   [ADR 0006](../decisions/0006-username-password-auth-with-server-sessions.md),
@@ -93,10 +93,10 @@ until someone notices.
 
 | Phase | Steps | Status |
 |---|---|---|
-| 1. Schema | 0 / 3 | Not started |
-| 2. API | 0 / 3 | Not started |
-| 3. The form | 0 / 3 | Not started |
-| 4. Account screen and docs | 0 / 2 | Not started |
+| 1. Schema | 3 / 3 | Done |
+| 2. API | 3 / 3 | Done |
+| 3. The form | 3 / 3 | Done |
+| 4. Account screen and docs | 2 / 2 | Done |
 
 ---
 
@@ -104,7 +104,7 @@ until someone notices.
 
 ### Step 1.1 — Name parts and home address
 
-- [ ] **Action.** In `backend/src/db/schema/users.ts` add, all **nullable**
+- [x] **Action.** In `backend/src/db/schema/users.ts` add, all **nullable**
       for now:
 
       | Column | Type | Note |
@@ -121,12 +121,12 @@ until someone notices.
       already relates to both geography tables.
 
       Leave `full_name` in place for now — step 1.3 removes it.
-- [ ] **Verify.** `npm run db:generate` produces one migration, and reading
+- [x] **Verify.** `npm run db:generate` produces one migration, and reading
       the SQL shows only `ADD COLUMN`, no drops.
 
 ### Step 1.2 — Backfill the names
 
-- [ ] **Action.** Hand-write a `UPDATE` into the generated migration that
+- [x] **Action.** Hand-write a `UPDATE` into the generated migration that
       fills `first_name` and `last_name` from `full_name`, splitting on the
       **last** space (everything before it is the first name).
 
@@ -134,13 +134,13 @@ until someone notices.
       run against a handful of test accounts — there are no real users yet.
       Anyone reading it in a year must not mistake it for a considered
       name-parsing strategy.
-- [ ] **Verify.** Against a seeded local database,
+- [x] **Verify.** Against a seeded local database,
       `select full_name, first_name, last_name from users;` splits
       `Juan Dela Cruz` into `Juan` / `Dela Cruz`.
 
 ### Step 1.3 — Make the name required, drop the old column
 
-- [ ] **Action.** A second migration: `SET NOT NULL` on `first_name` and
+- [x] **Action.** A second migration: `SET NOT NULL` on `first_name` and
       `last_name`, then `DROP COLUMN full_name`.
 
       **Location stays nullable.** It cannot be backfilled — nobody knows
@@ -148,7 +148,7 @@ until someone notices.
       registrations and null for accounts that predate this. A `NOT NULL`
       here would mean inventing an address for someone, which is worse than
       an empty one.
-- [ ] **Verify.** `npm run db:reset && npm run db:migrate && npm run db:seed`
+- [x] **Verify.** `npm run db:reset && npm run db:migrate && npm run db:seed`
       succeeds from nothing, and `\d users` shows `first_name` and
       `last_name` as `not null` with no `full_name`.
 
@@ -158,7 +158,7 @@ until someone notices.
 
 ### Step 2.1 — Accept the new shape
 
-- [ ] **Action.** In `backend/src/modules/auth/auth.schema.ts`, replace
+- [x] **Action.** In `backend/src/modules/auth/auth.schema.ts`, replace
       `fullName` in `registerBody` with:
 
       ```
@@ -176,12 +176,12 @@ until someone notices.
       that the barangay actually belongs to the municipality. Reuse it rather
       than writing a second copy — if that means lifting the lookup into
       `lib/`, do that.
-- [ ] **Verify.** `curl` a registration with a barangay from a different
+- [x] **Verify.** `curl` a registration with a barangay from a different
       municipality; it answers `400` naming the mismatch, not `500`.
 
 ### Step 2.2 — Return it from `/me`
 
-- [ ] **Action.** Extend `backend/src/contracts/me.ts`:
+- [x] **Action.** Extend `backend/src/contracts/me.ts`:
 
       ```ts
       name: { first: string; middle: string | null;
@@ -197,15 +197,15 @@ until someone notices.
       means there is still only one source of truth.
 
       `home` is null for accounts that predate this plan.
-- [ ] **Verify.** `GET /api/v1/me` returns the parts, a sensible `fullName`,
+- [x] **Verify.** `GET /api/v1/me` returns the parts, a sensible `fullName`,
       and `home: null` for an old account.
 
 ### Step 2.3 — Keep the address private
 
-- [ ] **Action.** Confirm the address appears **only** in `CurrentUser`.
+- [x] **Action.** Confirm the address appears **only** in `CurrentUser`.
       It must not reach `VendorSummary`, `ProductCard`, `OrderSummary` or any
       other shape — those are read by people who are not its owner.
-- [ ] **Verify.** `grep -rn "addressDetail" backend/src/contracts/` returns
+- [x] **Verify.** `grep -rn "addressDetail" backend/src/contracts/` returns
       `me.ts` and nothing else.
 
 A home address is personal data about a named individual, in a province where
@@ -218,7 +218,7 @@ farm can deliver an order, and that is the only thing it is for.
 
 ### Step 3.1 — Three sections, one submit
 
-- [ ] **Action.** Restructure `frontend/src/pages/RegisterPage.tsx` into
+- [x] **Action.** Restructure `frontend/src/pages/RegisterPage.tsx` into
       three labelled sections, using the existing `.eyebrow` class for the
       headings:
 
@@ -231,12 +231,12 @@ farm can deliver an order, and that is the only thing it is for.
       Still one `<form>` and one submit. Use `TextField` and `SelectField`
       from `components/ui/Field.tsx`; mark the two optional fields with the
       `optional` prop rather than marking everything else required.
-- [ ] **Verify.** At **360px** the form has three visible section headings
+- [x] **Verify.** At **360px** the form has three visible section headings
       and no horizontal overflow. Screenshot it.
 
 ### Step 3.2 — The location selects
 
-- [ ] **Action.** Copy the municipality/barangay pair from
+- [x] **Action.** Copy the municipality/barangay pair from
       `pages/VendorRegisterPage.tsx` exactly: barangay disabled until a
       municipality is chosen, and choosing a different municipality clears
       the barangay. Those hooks are already in `features/vendors/api.ts` and
@@ -244,15 +244,15 @@ farm can deliver an order, and that is the only thing it is for.
 
       The free-text field: label **"House or street"**, hint *"How someone
       would find your house — purok, house number, or a nearby landmark."*
-- [ ] **Verify.** Barangay is disabled until a municipality is picked, and
+- [x] **Verify.** Barangay is disabled until a municipality is picked, and
       changing municipality empties it.
 
 ### Step 3.3 — Errors still land on the field
 
-- [ ] **Action.** Keep the behaviour plan 0005 established: never disable the
+- [x] **Action.** Keep the behaviour plan 0005 established: never disable the
       submit, let the browser block and focus the first offending field, and
       put the duplicate-username `CONFLICT` on the username field.
-- [ ] **Verify.** Submitting with an empty last name moves focus to it.
+- [x] **Verify.** Submitting with an empty last name moves focus to it.
       Submitting a taken username shows the error on the username field.
 
 ---
@@ -261,32 +261,32 @@ farm can deliver an order, and that is the only thing it is for.
 
 ### Step 4.1 — Show what was collected
 
-- [ ] **Action.** `pages/AccountPage.tsx` gains a "Where you live" row:
+- [x] **Action.** `pages/AccountPage.tsx` gains a "Where you live" row:
       barangay, municipality, and the detail. For an account with
       `home: null`, say so plainly — "Not added yet" — rather than leaving a
       blank.
-- [ ] **Verify.** Both cases render. Screenshot at 360px.
+- [x] **Verify.** Both cases render. Screenshot at 360px.
 
 ### Step 4.2 — Update the reference
 
-- [ ] **Action.** Update `docs/reference/data-model.md` (the `users` table)
+- [x] **Action.** Update `docs/reference/data-model.md` (the `users` table)
       and `docs/reference/api.md` (the `register` body and the `/me` shape)
       in this pull request.
-- [ ] **Verify.** `npm run docs:check` passes.
+- [x] **Verify.** `npm run docs:check` passes.
 
 ---
 
 ## Acceptance
 
-- [ ] A new account cannot be created without first name, last name,
+- [x] A new account cannot be created without first name, last name,
       municipality, barangay and the address detail
-- [ ] Middle name and suffix are genuinely optional
-- [ ] A barangay from the wrong municipality is a 400, not a 500
-- [ ] `/me` returns the name parts, a derived `fullName`, and `home`
-- [ ] `home: null` for accounts created before this, and nothing crashes
-- [ ] The address appears in no contract but `me.ts`
-- [ ] The form shows three sections and fits 360px
-- [ ] `npm run typecheck && npm run lint && npm test && npm run docs:check`
+- [x] Middle name and suffix are genuinely optional
+- [x] A barangay from the wrong municipality is a 400, not a 500
+- [x] `/me` returns the name parts, a derived `fullName`, and `home`
+- [x] `home: null` for accounts created before this, and nothing crashes
+- [x] The address appears in no contract but `me.ts`
+- [x] The form shows three sections and fits 360px
+- [x] `npm run typecheck && npm run lint && npm test && npm run docs:check`
 - [ ] **The migration has been applied to Supabase before the merge**
 
 ## Follow-ups

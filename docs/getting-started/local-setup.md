@@ -85,7 +85,7 @@ API=http://localhost:4000/api/v1
 
 # An account
 curl -s -c /tmp/ani -X POST $API/auth/register -H 'Content-Type: application/json' \
-  -d '{"username":"juanfarmer","password":"harvest2026","fullName":"Juan Dela Cruz","phone":"0917 123 4567"}'
+  -d '{"username":"juanfarmer","password":"harvest2026","firstName":"Juan","lastName":"Dela Cruz","municipalitySlug":"naval","barangaySlug":"atipolo","addressDetail":"Near the barangay hall","phone":"0917 123 4567"}'
 
 # A farm — created pending, so it cannot list yet
 curl -s -b /tmp/ani -X POST $API/vendors/register -H 'Content-Type: application/json' \
