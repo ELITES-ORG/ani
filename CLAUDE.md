@@ -43,6 +43,8 @@ Faster and more reliable than any description of the conventions:
 | Error handling | `backend/src/lib/http-error.ts` |
 | Env validation | `backend/src/config/env.ts` |
 | A UI primitive | `frontend/src/components/ui/Button.tsx` |
+| A form screen | `frontend/src/pages/RegisterPage.tsx` |
+| A confirm-before-doing flow | `frontend/src/pages/CartPage.tsx` |
 | A feature's data layer | `frontend/src/features/products/api.ts` |
 | Design tokens | `frontend/src/styles/theme.css` |
 
@@ -131,6 +133,17 @@ Tailwind class name.
 rejects a reasonable alternative, gets an entry in
 [`docs/decisions/`](./docs/decisions/).
 
-**Verify before reporting done.** Run `npm run typecheck`, `npm run lint`, and
-`npm run docs:check`. Do not report work complete on the basis that it looks
-right.
+**Verify before reporting done.** Run `npm run typecheck`, `npm run lint`,
+`npm test` and `npm run docs:check`. Do not report work complete on the basis
+that it looks right.
+
+**Look at the screen.** For anything visual, `node scripts/screenshot.mjs` is
+a dependency-free headless Chrome, and every UI change should be checked at
+**390px** before it is called done. A design change nobody looked at is a
+guess. It takes `seed` for localStorage and `cookies` for a signed-in screen —
+see [`docs/reference/commands.md`](./docs/reference/commands.md).
+
+**This project is deployed.** Pushing to `main` auto-deploys the PWA to Vercel
+and the API to Render, and there is no branch protection. Check
+[`docs/reference/deployments.md`](./docs/reference/deployments.md) before you
+push something you would not want live.
