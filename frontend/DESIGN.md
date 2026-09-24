@@ -160,7 +160,8 @@ look like a template.
 
 | Class | Use |
 |---|---|
-| `page-enter` | 220ms rise. Applied by `AppLayout`, keyed on the route |
+| Page change | A view transition on every navigation: the old page fades out, the new one rises in, header and bottom bar hold still, and the tab indicator slides ([ADR 0019](../docs/decisions/0019-page-changes-are-view-transitions.md)). Nothing to add per page |
+| `page-enter` | Fallback only, for browsers without view transitions. Applied by `AppLayout` |
 | `stagger` | Children enter 35ms apart, capped at eight |
 | `pressable` | Press feedback, `scale(0.975)` |
 | `animate-pulse-soft` | Skeleton loading |
@@ -171,6 +172,12 @@ Two rules, no exceptions:
    hardware.
 2. **Nothing may depend on an animation.** `prefers-reduced-motion` turns all
    of it off globally, and the app must be complete in that state.
+
+Naming something for the page transition (`view-transition-name`, through a
+`vt-*` class in `motion.css`) makes it hold still or morph across pages. **A
+name must be on one element at a time.** Two elements with the same name abort
+the transition, and the page cuts without animation. Name only the active one,
+as the tab indicator does.
 
 ---
 

@@ -47,14 +47,96 @@
 }
 
 /**
- * Page transition.
+ * Page transition — a view transition (ADR 0019).
  *
- * Keyed on the route, so each navigation replays it. Deliberately a short
- * rise rather than a horizontal slide: a slide implies a direction, and
- * getting the direction wrong is more disorienting than no movement at all.
+ * The browser photographs the old page, renders the new one, and animates
+ * between the two. The old page is still on screen while the new one arrives,
+ * so there is no blank frame. The previous approach — mount the new page at
+ * opacity 0 and fade it up — could not avoid one, and that blink is what made
+ * page changes look like a glitch.
+ *
+ * The page body fades through: the old one leaves quickly, the new one rises
+ * 6px as it fades in, and the two overlap so the screen is never empty.
+ * Vertical, not a horizontal slide: a slide implies a direction, and the wrong
+ * direction is more disorienting than none.
+ *
+ * The header and bottom bar are named, so they hold still and only their
+ * contents cross-fade. The tab indicator is named on its own, so it slides
+ * from the tab you left to the tab you tapped.
+ *
+ * Every animation here is transform or opacity on a snapshot, which the
+ * compositor handles without touching layout.
  */
-.page-enter {
-  animation: rise 220ms var(--ease-out) both;
+.vt-header {
+  view-transition-name: app-header;
+}
+.vt-nav {
+  view-transition-name: app-nav;
+}
+.vt-nav-indicator {
+  view-transition-name: nav-indicator;
+}
+
+@keyframes vt-leave {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes vt-arrive {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 6px, 0);
+  }
+}
+
+::view-transition-old(root) {
+  animation: vt-leave 120ms var(--ease-out) both;
+}
+::view-transition-new(root) {
+  animation: vt-arrive 220ms var(--ease-out) 40ms both;
+}
+
+::view-transition-group(app-header),
+::view-transition-group(app-nav) {
+  animation-duration: 200ms;
+  animation-timing-function: var(--ease-out);
+}
+/* Two titles cross-fading at once are briefly legible on top of each other.
+   The old one gets out of the way first, as the page body does. */
+::view-transition-old(app-header) {
+  animation: vt-leave 100ms var(--ease-out) both;
+}
+::view-transition-new(app-header) {
+  animation: fade 180ms var(--ease-out) 60ms both;
+}
+::view-transition-old(app-nav),
+::view-transition-new(app-nav) {
+  animation-duration: 200ms;
+}
+
+::view-transition-group(nav-indicator) {
+  animation-duration: 260ms;
+  animation-timing-function: var(--ease-out);
+}
+
+/*
+ * Fallback for a browser without view transitions: the main area is keyed on
+ * the route and replays this on mount. Transform only, with no fade from zero,
+ * because fading up from nothing is exactly the blank frame the view
+ * transition exists to avoid. Where view transitions are supported it is off,
+ * or the new page would animate twice.
+ */
+@supports not (view-transition-name: none) {
+  .page-enter {
+    animation: settle 200ms var(--ease-out) both;
+  }
+}
+
+@keyframes settle {
+  from {
+    transform: translate3d(0, 6px, 0);
+  }
 }
 
 /**

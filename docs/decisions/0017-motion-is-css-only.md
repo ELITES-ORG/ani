@@ -1,6 +1,6 @@
 # 0017. Motion is a few keyframes, and never load-bearing
 
-- **Status:** Accepted
+- **Status:** Accepted. The page transition is superseded by [0019](./0019-page-changes-are-view-transitions.md)
 - **Date:** 2026-09-24
 
 ## Context

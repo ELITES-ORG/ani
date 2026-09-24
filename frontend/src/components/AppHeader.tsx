@@ -53,7 +53,7 @@ export function AppHeader() {
   const title = dynamicTitle ?? TITLES[location.pathname];
 
   return (
-    <header className="sticky top-0 z-20 border-b border-border bg-canvas/95 backdrop-blur-sm">
+    <header className="vt-header sticky top-0 z-20 border-b border-border bg-canvas/95 backdrop-blur-sm">
       <div className="flex min-h-14 items-center gap-3 px-4">
         {isHome ? (
           <div className="flex min-w-0 flex-1 items-center gap-2.5">

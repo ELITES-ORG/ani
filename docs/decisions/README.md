@@ -55,3 +55,4 @@ Number sequentially. Never renumber.
 | [0016](./0016-the-interface-assumes-no-app-literacy.md) | The interface assumes no app literacy | Accepted |
 | [0017](./0017-motion-is-css-only.md) | Motion is a few keyframes, and never load-bearing | Accepted |
 | [0018](./0018-one-self-hosted-variable-font.md) | One self-hosted variable font | Accepted |
+| [0019](./0019-page-changes-are-view-transitions.md) | Page changes are view transitions | Accepted |

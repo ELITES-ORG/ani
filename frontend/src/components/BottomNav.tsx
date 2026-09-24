@@ -24,7 +24,7 @@ export function BottomNav({ basketCount }: { basketCount: number }) {
   return (
     <nav
       aria-label="Main"
-      className="safe-bottom fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface shadow-bar"
+      className="vt-nav safe-bottom fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface shadow-bar"
     >
       <ul className="mx-auto flex max-w-lg">
         {ITEMS.map(({ to, label, Icon, end }) => (
@@ -44,7 +44,9 @@ export function BottomNav({ basketCount }: { basketCount: number }) {
                   <span
                     className={cn(
                       'absolute inset-x-5 top-0 h-0.5 rounded-full transition-opacity duration-200',
-                      isActive ? 'bg-accent-500 opacity-100' : 'opacity-0',
+                      // Only the active bar is named, so the view transition slides it
+                      // from the old tab to the new one.
+                      isActive ? 'vt-nav-indicator bg-accent-500 opacity-100' : 'opacity-0',
                     )}
                     aria-hidden
                   />
