@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Info, ShoppingBasket, Store, Trash2 } from 'lucide-react';
 import { useCurrentUser } from '@/features/auth/api';
+import { AccountReviewNotice } from '@/features/auth/AccountReviewNotice';
 import { usePlaceOrder } from '@/features/orders/api';
 import { useCart } from '@/hooks/useCart';
 import { groupByVendor, type CartItem } from '@/lib/cart';
@@ -115,7 +116,11 @@ export function CartPage() {
 
       {placeOrder.isError && <ErrorNotice error={placeOrder.error} />}
 
-      {user ? (
+      {user && user.approval.status !== 'approved' ? (
+        // In place of the order button: the basket and its totals stay, so
+        // nothing chosen is lost while the account is checked.
+        <AccountReviewNotice approval={user.approval} blocked="order" />
+      ) : user ? (
         <div className="space-y-2">
           <Button
             size="lg"

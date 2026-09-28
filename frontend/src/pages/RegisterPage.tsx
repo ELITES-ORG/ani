@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { useRegister } from '@/features/auth/api';
-import { useBarangays, useMunicipalities } from '@/features/vendors/api';
+import { HomeFields, type HomeValues } from '@/features/auth/HomeFields';
+import { NameFields, type NameValues } from '@/features/auth/NameFields';
 import { readReturnPath } from '@/lib/return-path';
 import { ApiError } from '@/lib/api-client';
 import { Button } from '@/components/ui/Button';
 import { ErrorNotice } from '@/components/ui/ErrorNotice';
-import { SelectField, TextField } from '@/components/ui/Field';
+import { TextField } from '@/components/ui/Field';
 
 const USERNAME_PATTERN = /^[a-zA-Z0-9_.]+$/;
 
@@ -19,20 +20,22 @@ const USERNAME_PATTERN = /^[a-zA-Z0-9_.]+$/;
  * when the connection drops between steps.
  */
 export function RegisterPage() {
-  const [firstName, setFirstName] = useState('');
-  const [middleName, setMiddleName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [suffix, setSuffix] = useState('');
+  const [name, setName] = useState<NameValues>({
+    firstName: '',
+    middleName: '',
+    lastName: '',
+    suffix: '',
+  });
   const [username, setUsername] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [municipalitySlug, setMunicipalitySlug] = useState('');
-  const [barangaySlug, setBarangaySlug] = useState('');
-  const [addressDetail, setAddressDetail] = useState('');
+  const [home, setHome] = useState<HomeValues>({
+    municipalitySlug: '',
+    barangaySlug: '',
+    addressDetail: '',
+  });
 
-  const municipalities = useMunicipalities();
-  const barangays = useBarangays(municipalitySlug === '' ? undefined : municipalitySlug);
   const register = useRegister();
   const navigate = useNavigate();
   const location = useLocation();
@@ -71,18 +74,18 @@ export function RegisterPage() {
       onSubmit={(event) => {
         event.preventDefault();
         if (usernameError !== undefined) return;
-        const trimmedMiddle = middleName.trim();
-        const trimmedSuffix = suffix.trim();
+        const trimmedMiddle = name.middleName.trim();
+        const trimmedSuffix = name.suffix.trim();
         register.mutate(
           {
-            firstName: firstName.trim(),
-            lastName: lastName.trim(),
+            firstName: name.firstName.trim(),
+            lastName: name.lastName.trim(),
             username: trimmedUsername,
             phone: phone.trim(),
             password,
-            municipalitySlug,
-            barangaySlug,
-            addressDetail: addressDetail.trim(),
+            municipalitySlug: home.municipalitySlug,
+            barangaySlug: home.barangaySlug,
+            addressDetail: home.addressDetail.trim(),
             ...(trimmedMiddle !== '' && { middleName: trimmedMiddle }),
             ...(trimmedSuffix !== '' && { suffix: trimmedSuffix }),
           },
@@ -91,49 +94,7 @@ export function RegisterPage() {
       }}
       className="space-y-8"
     >
-      <section className="space-y-5">
-        <h2 className="eyebrow">Your name</h2>
-
-        <TextField
-          label="First name"
-          value={firstName}
-          onChange={(event) => setFirstName(event.target.value)}
-          autoComplete="given-name"
-          required
-          minLength={1}
-          maxLength={60}
-        />
-
-        <TextField
-          label="Middle name"
-          hint="Often your mother's maiden surname."
-          value={middleName}
-          onChange={(event) => setMiddleName(event.target.value)}
-          autoComplete="additional-name"
-          maxLength={60}
-          optional
-        />
-
-        <TextField
-          label="Last name"
-          value={lastName}
-          onChange={(event) => setLastName(event.target.value)}
-          autoComplete="family-name"
-          required
-          minLength={1}
-          maxLength={60}
-        />
-
-        <TextField
-          label="Suffix"
-          hint="Jr., Sr., III — leave blank if none."
-          value={suffix}
-          onChange={(event) => setSuffix(event.target.value)}
-          autoComplete="honorific-suffix"
-          maxLength={10}
-          optional
-        />
-      </section>
+      <NameFields value={name} onChange={setName} />
 
       <section className="space-y-5">
         <h2 className="eyebrow">How you sign in</h2>
@@ -197,55 +158,7 @@ export function RegisterPage() {
         </div>
       </section>
 
-      <section className="space-y-5">
-        <h2 className="eyebrow">Where you live</h2>
-
-        <SelectField
-          label="Municipality"
-          value={municipalitySlug}
-          onChange={(event) => {
-            setMunicipalitySlug(event.target.value);
-            // The old barangay belongs to a different municipality.
-            setBarangaySlug('');
-          }}
-          required
-        >
-          <option value="">Choose one</option>
-          {municipalities.data?.map((municipality) => (
-            <option key={municipality.id} value={municipality.slug}>
-              {municipality.name}
-            </option>
-          ))}
-        </SelectField>
-
-        <SelectField
-          label="Barangay"
-          value={barangaySlug}
-          onChange={(event) => setBarangaySlug(event.target.value)}
-          required
-          disabled={municipalitySlug === ''}
-        >
-          <option value="">
-            {municipalitySlug === '' ? 'Choose a municipality first' : 'Choose one'}
-          </option>
-          {barangays.data?.map((barangay) => (
-            <option key={barangay.id} value={barangay.slug}>
-              {barangay.name}
-            </option>
-          ))}
-        </SelectField>
-
-        <TextField
-          label="House or street"
-          hint="How someone would find your house — purok, house number, or a nearby landmark."
-          value={addressDetail}
-          onChange={(event) => setAddressDetail(event.target.value)}
-          autoComplete="street-address"
-          required
-          minLength={1}
-          maxLength={200}
-        />
-      </section>
+      <HomeFields value={home} onChange={setHome} />
 
       {/* Duplicate username lands on the field; everything else stays here. */}
       {register.isError && duplicateUsername === undefined && (

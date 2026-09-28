@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 import { barangays, municipalities, users, vendors } from '../../db/schema/index.js';
 import { AppError } from '../../lib/http-error.js';
@@ -59,6 +59,55 @@ export async function registerUser(input: RegisterInput): Promise<UserRow> {
   return created;
 }
 
+export type UpdateDetailsInput = Omit<RegisterInput, 'username' | 'password'>;
+
+/**
+ * The person corrects their own details while they are being checked.
+ *
+ * Only while `pending` or `rejected`: once approved, what the admin checked
+ * is what stands (a profile editor is a follow-up). A rejected account goes
+ * back to `pending` with the old reason cleared, so it re-enters the queue.
+ * The status is part of the update's condition, so an approval landing at
+ * the same moment is never overwritten.
+ */
+export async function updateOwnDetails(
+  user: UserRow,
+  input: UpdateDetailsInput,
+): Promise<UserRow> {
+  const cannot = AppError.conflict('Your details cannot be changed here yet.');
+  if (user.approvalStatus === 'approved') throw cannot;
+
+  const { municipality, barangay } = await resolveMunicipalityBarangay(
+    input.municipalitySlug,
+    input.barangaySlug,
+  );
+
+  const [updated] = await db
+    .update(users)
+    .set({
+      firstName: input.firstName,
+      middleName: input.middleName ?? null,
+      lastName: input.lastName,
+      suffix: input.suffix ?? null,
+      municipalityId: municipality.id,
+      barangayId: barangay.id,
+      addressDetail: input.addressDetail,
+      phone: input.phone,
+      // The app has no email field; one given at registration is kept.
+      ...(input.email !== undefined && { email: input.email }),
+      approvalStatus: 'pending',
+      reviewNote: null,
+      updatedAt: new Date(),
+    })
+    .where(
+      and(eq(users.id, user.id), inArray(users.approvalStatus, ['pending', 'rejected'])),
+    )
+    .returning();
+
+  if (!updated) throw cannot;
+  return updated;
+}
+
 export async function authenticate(username: string, password: string): Promise<UserRow> {
   const user = await db.query.users.findFirst({ where: eq(users.username, username) });
 
@@ -89,7 +138,9 @@ export async function currentUser(user: UserRow): Promise<CurrentUser> {
     if (municipality && barangay) {
       home = {
         municipality: municipality.name,
+        municipalitySlug: municipality.slug,
         barangay: barangay.name,
+        barangaySlug: barangay.slug,
         addressDetail: user.addressDetail,
       };
     }
@@ -110,8 +161,16 @@ export async function currentUser(user: UserRow): Promise<CurrentUser> {
       suffix: user.suffix,
     },
     phone: user.phone,
+    approval: { status: user.approvalStatus, note: user.reviewNote },
     home,
     isAdmin: user.isAdmin,
-    vendor: vendor ? { id: vendor.id, farmName: vendor.farmName, status: vendor.status } : null,
+    vendor: vendor
+      ? {
+          id: vendor.id,
+          farmName: vendor.farmName,
+          status: vendor.status,
+          reviewNote: vendor.reviewNote,
+        }
+      : null,
   };
 }

@@ -1,9 +1,9 @@
-import { and, count, eq } from 'drizzle-orm';
+import { and, count, eq, inArray } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 import { barangays, municipalities, vendors } from '../../db/schema/index.js';
 import { AppError } from '../../lib/http-error.js';
 import { resolveMunicipalityBarangay } from '../../lib/geography.js';
-import type { VendorDetail, VendorSummary } from '../../contracts/vendors.js';
+import type { OwnFarm, VendorDetail, VendorSummary } from '../../contracts/vendors.js';
 import type { ListMeta } from '../../contracts/pagination.js';
 
 export interface RegisterVendorInput {
@@ -61,6 +61,78 @@ export async function registerVendor(
     status: created.status,
     registeredAt: created.registeredAt.toISOString(),
   };
+}
+
+type VendorRow = typeof vendors.$inferSelect;
+
+async function toOwnFarm(row: VendorRow): Promise<OwnFarm> {
+  const [municipality, barangay] = await Promise.all([
+    db.query.municipalities.findFirst({ where: eq(municipalities.id, row.municipalityId) }),
+    db.query.barangays.findFirst({ where: eq(barangays.id, row.barangayId) }),
+  ]);
+  if (!municipality || !barangay) {
+    throw new Error(`Farm ${row.id} points at missing geography`);
+  }
+  return {
+    id: row.id,
+    farmName: row.farmName,
+    municipality: municipality.name,
+    municipalitySlug: municipality.slug,
+    barangay: barangay.name,
+    barangaySlug: barangay.slug,
+    description: row.description,
+    landmark: row.landmark,
+    status: row.status,
+    registeredAt: row.registeredAt.toISOString(),
+    reviewNote: row.reviewNote,
+  };
+}
+
+/** The caller's own farm, whatever its status. */
+export async function getOwnFarm(userId: string): Promise<OwnFarm> {
+  const row = await db.query.vendors.findFirst({ where: eq(vendors.userId, userId) });
+  if (!row) throw AppError.notFound('You have not registered a farm.');
+  return toOwnFarm(row);
+}
+
+/**
+ * The owner corrects their farm while it is being checked, or resubmits it
+ * after a rejection (ADR 0011).
+ *
+ * Only while `pending` or `rejected`: an approved farm's details are what
+ * buyers already see. A rejected farm goes back to `pending` with the old
+ * reason cleared. The status is part of the update's condition, so an
+ * approval landing at the same moment is never overwritten.
+ */
+export async function updateOwnFarm(userId: string, input: RegisterVendorInput): Promise<OwnFarm> {
+  const existing = await db.query.vendors.findFirst({ where: eq(vendors.userId, userId) });
+  if (!existing) throw AppError.notFound('You have not registered a farm.');
+
+  const cannot = AppError.conflict('Your farm details cannot be changed here.');
+  if (existing.status !== 'pending' && existing.status !== 'rejected') throw cannot;
+
+  const { municipality, barangay } = await resolveMunicipalityBarangay(
+    input.municipalitySlug,
+    input.barangaySlug,
+  );
+
+  const [updated] = await db
+    .update(vendors)
+    .set({
+      farmName: input.farmName,
+      description: input.description ?? null,
+      municipalityId: municipality.id,
+      barangayId: barangay.id,
+      landmark: input.landmark ?? null,
+      status: 'pending',
+      reviewNote: null,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(vendors.id, existing.id), inArray(vendors.status, ['pending', 'rejected'])))
+    .returning();
+
+  if (!updated) throw cannot;
+  return toOwnFarm(updated);
 }
 
 export async function listApprovedVendors(

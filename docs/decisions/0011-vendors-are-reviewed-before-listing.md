@@ -2,6 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-09-24
+- **Extended by:** [ADR 0020](./0020-every-account-is-reviewed-before-it-can-order.md)
 
 ## Context
 
@@ -47,5 +48,4 @@ trying hard to attract. That makes the admin queue urgent rather than
 optional; it is tracked in
 [plans/0003](../plans/0003-admin-approval-queue.md).
 
-There is no approval endpoint yet. Until there is, approval is a SQL update,
-which is acceptable for a handful of farms and not beyond that.
+The queue is at `/admin`, where a farm is approved only once its owner's account is.

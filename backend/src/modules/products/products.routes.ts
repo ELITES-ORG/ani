@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { requireAuth } from '../../middleware/require-auth.js';
+import { requireApprovedAccount, requireAuth } from '../../middleware/require-auth.js';
 import { writeLimiter } from '../../middleware/rate-limit.js';
 import { createProductBody, listQuery } from './products.schema.js';
 import { createProduct, getProduct, listProducts, listVendorProducts } from './products.service.js';
@@ -37,7 +37,7 @@ productsRouter.get('/:id', async (req, res) => {
 });
 
 /** MVP 2 — an approved vendor lists produce. */
-productsRouter.post('/', requireAuth, writeLimiter, async (req, res) => {
+productsRouter.post('/', requireAuth, requireApprovedAccount, writeLimiter, async (req, res) => {
   const body = createProductBody.parse(req.body);
   res.status(201).json({ data: await createProduct(req.user!.id, body) });
 });

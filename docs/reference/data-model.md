@@ -28,9 +28,13 @@ role added later ([ADR 0007](../decisions/0007-one-account-selling-is-a-role.md)
 | `phone` | text | `+63` E.164. Not a login credential |
 | `email` | text null | Many users have none |
 | `municipality_id`, `barangay_id` | uuid null → geography | Home address. Null for accounts that predate collecting it |
-| `address_detail` | text null | Purok, house number, or a landmark. Personal data — only on `CurrentUser` |
+| `address_detail` | text null | Purok, house number, or a landmark. Personal data — only on `CurrentUser` and the admin-only `PendingAccount` |
 | `is_admin` | boolean | |
 | `suspended_at` | timestamptz null | Checked on every authenticated request |
+| `approval_status` | `account_approval_status` | Default `pending`. Accounts that predate review were set `approved` by the migration ([ADR 0020](../decisions/0020-every-account-is-reviewed-before-it-can-order.md)). Indexed for the queue |
+| `review_note` | text null | The admin's reason for rejecting, shown to the person. Latest decision only |
+| `reviewed_at` | timestamptz null | |
+| `reviewed_by` | uuid null → users | The admin. Set null if that account is deleted |
 
 ## vendors
 
@@ -43,10 +47,15 @@ A farm. One per user account.
 | `farm_name` | text | |
 | `municipality_id`, `barangay_id` | uuid → geography | Both required |
 | `landmark` | text null | How people actually navigate here |
-| `status` | `vendor_status` | `pending` → `approved` / `suspended` |
+| `status` | `vendor_status` | `pending` → `approved` / `rejected`; `approved` → `suspended` |
+| `review_note` | text null | The admin's reason for rejecting, shown to the owner. Latest decision only |
+| `reviewed_at` | timestamptz null | |
+| `reviewed_by` | uuid null → users | The admin. Set null if that account is deleted |
 
 New farms are `pending` and invisible to buyers
 ([ADR 0011](../decisions/0011-vendors-are-reviewed-before-listing.md)).
+`rejected` is "not approved, here is why, fix it"; `suspended` is "was
+approved, now paused". Only `approved` reaches the catalogue.
 
 ## products
 
@@ -116,7 +125,8 @@ Redis — one fewer service to run.
 
 | Enum | Values |
 |---|---|
-| `vendor_status` | `pending`, `approved`, `suspended` |
+| `vendor_status` | `pending`, `approved`, `rejected`, `suspended` |
+| `account_approval_status` | `pending`, `approved`, `rejected` |
 | `product_category` | `vegetables`, `fruits`, `rice_and_grains`, `seafood`, `meat_and_poultry`, `dairy_and_eggs`, `herbs_and_spices`, `processed` |
 | `sell_unit` | `kg`, `gram`, `piece`, `bundle`, `sack`, `tray`, `liter` |
 | `order_status` | `pending`, `confirmed`, `ready`, `out_for_delivery`, `completed`, `cancelled` |

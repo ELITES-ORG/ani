@@ -14,6 +14,8 @@ import { VendorRegisterPage } from '@/pages/VendorRegisterPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { RegisterPage } from '@/pages/RegisterPage';
 import { AccountPage } from '@/pages/AccountPage';
+import { AccountEditPage } from '@/pages/AccountEditPage';
+import { AdminPage } from '@/pages/AdminPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 
 const router = withViewTransitions(createBrowserRouter([
@@ -34,6 +36,11 @@ const router = withViewTransitions(createBrowserRouter([
       { path: 'login', element: <LoginPage /> },
       { path: 'register', element: <RegisterPage /> },
       { path: 'account', element: <AccountPage /> },
+      { path: 'account/edit', element: <AccountEditPage /> },
+
+      // Admins only — the approval queue (ADR 0020)
+      { path: 'admin', element: <AdminPage /> },
+
       { path: '*', element: <NotFoundPage /> },
     ],
   },

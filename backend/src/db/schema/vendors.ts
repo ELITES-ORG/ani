@@ -30,6 +30,13 @@ export const vendors = pgTable(
     landmark: text('landmark'),
 
     status: vendorStatus('status').notNull().default('pending'),
+    // The admin's reason for rejecting the farm, shown to its owner so a
+    // rejection is a correction, not a dead end (ADR 0011). Cleared on
+    // resubmit. Only the latest decision is kept.
+    reviewNote: text('review_note'),
+    reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+    // Kept as null if that admin's account is ever deleted.
+    reviewedBy: uuid('reviewed_by').references(() => users.id, { onDelete: 'set null' }),
 
     registeredAt: timestamp('registered_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

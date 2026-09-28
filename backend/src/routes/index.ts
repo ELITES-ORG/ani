@@ -6,6 +6,7 @@ import { taxonomyRouter } from '../modules/taxonomy/taxonomy.routes.js';
 import { productsRouter } from '../modules/products/products.routes.js';
 import { vendorsRouter } from '../modules/vendors/vendors.routes.js';
 import { ordersRouter } from '../modules/orders/orders.routes.js';
+import { adminRouter } from '../modules/admin/admin.routes.js';
 
 /**
  * All application routes hang off /api/v1. Versioning the prefix from day one
@@ -21,3 +22,4 @@ apiRouter.use('/taxonomy', taxonomyRouter);
 apiRouter.use('/products', productsRouter);
 apiRouter.use('/vendors', vendorsRouter);
 apiRouter.use('/orders', ordersRouter);
+apiRouter.use('/admin', adminRouter);

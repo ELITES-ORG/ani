@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { requireAuth } from '../../middleware/require-auth.js';
+import { requireApprovedAccount, requireAuth } from '../../middleware/require-auth.js';
 import { writeLimiter } from '../../middleware/rate-limit.js';
 import { listOrdersQuery, placeOrderBody, updateStatusBody } from './orders.schema.js';
 import {
@@ -15,7 +15,7 @@ export const ordersRouter: Router = Router();
 const idParam = z.object({ id: z.string().uuid() });
 
 /** MVP 1 — checkout. */
-ordersRouter.post('/', requireAuth, writeLimiter, async (req, res) => {
+ordersRouter.post('/', requireAuth, requireApprovedAccount, writeLimiter, async (req, res) => {
   const body = placeOrderBody.parse(req.body);
   res.status(201).json({ data: await placeOrder(req.user!.id, body) });
 });

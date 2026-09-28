@@ -36,7 +36,7 @@ running something, it is too vague to hand to anyone.
 |---|---|---|
 | [0001](./0001-deployment.md) | Deployment — Supabase, Render, Vercel | In progress |
 | [0002](./0002-product-photos.md) | Product photos | Draft |
-| [0003](./0003-admin-approval-queue.md) | Admin approval queue | Ready |
+| [0003](./0003-admin-approval-queue.md) | Admin approval queue — accounts and farms | In progress |
 | [0004](./0004-offline-catalogue.md) | Offline catalogue | Draft |
 | [0005](./0005-sign-up-and-sign-in.md) | Finish sign-up and sign-in | Complete |
 | [0006](./0006-registration-collects-name-and-home.md) | Registration collects a full name and a home address | Complete |

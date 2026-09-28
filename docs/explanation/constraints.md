@@ -104,6 +104,11 @@ apart and know each other's cousins.
 - **Vendors are reviewed before their produce is listed.** Every listing
   published sits under Ani's name, and there is no institution absorbing that
   risk. ([ADR 0011](../decisions/0011-vendors-are-reviewed-before-listing.md))
+- **Every account is reviewed before it can order.** A farm harvests and sets
+  produce aside on the strength of an order alone, and has to recognise who
+  comes to collect it. A new account can browse and fill a basket, but orders
+  only once an admin has approved it.
+  ([ADR 0020](../decisions/0020-every-account-is-reviewed-before-it-can-order.md))
 
 ## 6. Location is a lookup, not a coordinate
 

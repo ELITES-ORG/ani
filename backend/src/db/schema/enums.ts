@@ -1,7 +1,24 @@
 import { pgEnum } from 'drizzle-orm/pg-core';
 
-/** A vendor is reviewed before their produce reaches the catalogue. */
-export const vendorStatus = pgEnum('vendor_status', ['pending', 'approved', 'suspended']);
+/**
+ * A vendor is reviewed before their produce reaches the catalogue.
+ *
+ * Rejected is "not approved, here is why, fix it"; suspended is "was approved,
+ * now paused". Different outcomes with different next steps.
+ */
+export const vendorStatus = pgEnum('vendor_status', [
+  'pending',
+  'approved',
+  'rejected',
+  'suspended',
+]);
+
+/** A person is reviewed before they can order or sell. ADR 0020. */
+export const accountApprovalStatus = pgEnum('account_approval_status', [
+  'pending',
+  'approved',
+  'rejected',
+]);
 
 export const productCategory = pgEnum('product_category', [
   'vegetables',

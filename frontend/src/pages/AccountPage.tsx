@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { CircleUser, LogIn, Store } from 'lucide-react';
+import { CircleUser, ClipboardCheck, LogIn, Store } from 'lucide-react';
 import { useCurrentUser, useLogout } from '@/features/auth/api';
+import { usePendingAccounts, usePendingFarms } from '@/features/admin/api';
 import { Button } from '@/components/ui/Button';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -9,12 +10,20 @@ import { ErrorNotice } from '@/components/ui/ErrorNotice';
 import { Spinner } from '@/components/ui/Spinner';
 import { StatusPill, type StatusTone } from '@/components/ui/StatusPill';
 import { formatPhone } from '@/lib/phone';
+import type { AccountApprovalStatus } from '@contracts/me';
 import type { VendorStatus } from '@contracts/vendors';
 
 const FARM_STATUS: Record<VendorStatus, { label: string; tone: StatusTone }> = {
   pending: { label: 'Waiting for review', tone: 'waiting' },
   approved: { label: 'Approved', tone: 'active' },
+  rejected: { label: 'Not approved', tone: 'stopped' },
   suspended: { label: 'Paused', tone: 'stopped' },
+};
+
+const ACCOUNT_STATUS: Record<AccountApprovalStatus, { label: string; tone: StatusTone }> = {
+  pending: { label: 'Being checked', tone: 'waiting' },
+  approved: { label: 'Approved', tone: 'active' },
+  rejected: { label: 'Not approved', tone: 'stopped' },
 };
 
 /**
@@ -28,6 +37,13 @@ export function AccountPage() {
   const logout = useLogout();
   const navigate = useNavigate();
   const [confirmingLogout, setConfirmingLogout] = useState(false);
+
+  // Only an admin fetches the queues; everyone else never sees the button.
+  const isAdmin = user?.isAdmin === true;
+  const pendingAccounts = usePendingAccounts(isAdmin);
+  const pendingFarms = usePendingFarms(isAdmin);
+  const waiting =
+    (pendingAccounts.data?.meta.total ?? 0) + (pendingFarms.data?.meta.total ?? 0);
 
   if (isPending) return <Spinner label="Checking your account" />;
   if (isError) return <ErrorNotice error={error} onRetry={() => void refetch()} />;
@@ -49,6 +65,7 @@ export function AccountPage() {
 
   const farm = user.vendor;
   const farmStatus = farm !== null ? FARM_STATUS[farm.status] : null;
+  const accountStatus = ACCOUNT_STATUS[user.approval.status];
 
   return (
     <div className="space-y-6">
@@ -64,6 +81,24 @@ export function AccountPage() {
 
       <dl className="space-y-4 rounded-card border border-border bg-surface p-4">
         <div>
+          <dt className="eyebrow">Account</dt>
+          <dd className="mt-1.5 space-y-1.5">
+            <StatusPill tone={accountStatus.tone}>{accountStatus.label}</StatusPill>
+            {user.approval.status === 'rejected' && user.approval.note !== null && (
+              <p className="text-base text-ink">“{user.approval.note}”</p>
+            )}
+            {user.approval.status !== 'approved' && (
+              <Link
+                to="/account/edit"
+                className="flex min-h-12 items-center font-bold text-accent-700 underline decoration-accent-400 decoration-2 underline-offset-4"
+              >
+                {user.approval.status === 'rejected' ? 'Fix my details' : 'Change my details'}
+              </Link>
+            )}
+          </dd>
+        </div>
+
+        <div className="border-t border-border pt-4">
           <dt className="eyebrow">Mobile number</dt>
           <dd className="tnum mt-1 text-base font-semibold text-ink">{formatPhone(user.phone)}</dd>
         </div>
@@ -108,6 +143,14 @@ export function AccountPage() {
         happened" is a real outcome here, not a hypothetical one.
       */}
       {logout.isError && <ErrorNotice error={logout.error} />}
+
+      {isAdmin && (
+        <Link to="/admin" className="block">
+          <Button variant="secondary" icon={<ClipboardCheck size={18} aria-hidden />}>
+            {waiting > 0 ? `Review sign-ups · ${waiting}` : 'Review sign-ups'}
+          </Button>
+        </Link>
+      )}
 
       <Button variant="danger" onClick={() => setConfirmingLogout(true)}>
         Sign out

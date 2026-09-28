@@ -86,14 +86,23 @@ API=http://localhost:4000/api/v1
 # An account
 curl -s -c /tmp/ani -X POST $API/auth/register -H 'Content-Type: application/json' \
   -d '{"username":"juanfarmer","password":"harvest2026","firstName":"Juan","lastName":"Dela Cruz","municipalitySlug":"naval","barangaySlug":"atipolo","addressDetail":"Near the barangay hall","phone":"0917 123 4567"}'
+```
 
+The account is created pending, so it cannot register a farm yet. Approving it
+is done by an admin at `/admin`; locally, the SQL shortcut is quicker:
+
+```bash
+docker exec ani-postgres psql -U ani -d ani \
+  -c "update users set approval_status='approved' where username='juanfarmer';"
+```
+
+```bash
 # A farm — created pending, so it cannot list yet
 curl -s -b /tmp/ani -X POST $API/vendors/register -H 'Content-Type: application/json' \
   -d '{"farmName":"Dela Cruz Farm","municipalitySlug":"naval","barangaySlug":"caraycaray"}'
 ```
 
-Approving a farm is a SQL update until [plan 0003](../plans/0003-admin-approval-queue.md)
-ships:
+Approve the farm the same way, at `/admin` or locally:
 
 ```bash
 docker exec ani-postgres psql -U ani -d ani -c "update vendors set status='approved';"
