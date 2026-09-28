@@ -1,5 +1,14 @@
-import { pgTable, text, timestamp, uuid, boolean, index } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+  boolean,
+  index,
+  type AnyPgColumn,
+} from 'drizzle-orm/pg-core';
 import { barangays, municipalities } from './geography.js';
+import { accountApprovalStatus } from './enums.js';
 
 /**
  * One account per person.
@@ -39,8 +48,25 @@ export const users = pgTable(
     isAdmin: boolean('is_admin').notNull().default(false),
     suspendedAt: timestamp('suspended_at', { withTimezone: true }),
 
+    // Every account is seen by an admin before it can order or sell, so a
+    // farm never harvests for a fake order (ADR 0020). Accounts that predate
+    // review were approved by the migration that added this.
+    approvalStatus: accountApprovalStatus('approval_status').notNull().default('pending'),
+    // The admin's reason for rejecting, shown to the person so they can fix
+    // it. Cleared when they resubmit. Only the latest decision is kept.
+    reviewNote: text('review_note'),
+    reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+    // Kept as null if that admin's account is ever deleted: the decision
+    // stands even when the reviewer is gone.
+    reviewedBy: uuid('reviewed_by').references((): AnyPgColumn => users.id, {
+      onDelete: 'set null',
+    }),
+
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [index('users_phone_idx').on(table.phone)],
+  (table) => [
+    index('users_phone_idx').on(table.phone),
+    index('users_approval_status_idx').on(table.approvalStatus),
+  ],
 );

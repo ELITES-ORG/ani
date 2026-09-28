@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
-import { Clock, Leaf, LogIn, PauseCircle, Store } from 'lucide-react';
+import { CircleAlert, Clock, Leaf, LogIn, PauseCircle, Store } from 'lucide-react';
 import { useCurrentUser } from '@/features/auth/api';
+import { AccountReviewNotice } from '@/features/auth/AccountReviewNotice';
 import { useMyProducts } from '@/features/products/api';
 import { useReceivedOrders } from '@/features/orders/api';
 import { ORDER_STATUS } from '@/features/orders/types';
@@ -14,9 +15,12 @@ import { StatusPill } from '@/components/ui/StatusPill';
 /**
  * MVP 2 — the seller's home.
  *
- * Five states in order: signed out, no farm, awaiting review, suspended, and
- * selling. Each one says what is true now and what happens next, because a
- * farmer who registered and sees nothing will assume it did not work.
+ * Seven states in order: signed out, account not approved yet, no farm,
+ * awaiting review, not approved, suspended, and selling. The account comes
+ * before the farm: no farm is approved before its owner (ADR 0020). Each
+ * one says what is true now and what happens
+ * next, because a farmer who registered and sees nothing will assume it did
+ * not work. Only an approved farm reaches the last, "Your farm is live".
  */
 export function SellPage() {
   const { data: user, isPending } = useCurrentUser();
@@ -42,6 +46,10 @@ export function SellPage() {
     );
   }
 
+  if (user.approval.status !== 'approved') {
+    return <AccountReviewNotice approval={user.approval} blocked="sell" />;
+  }
+
   if (user.vendor === null) {
     return (
       <EmptyState
@@ -63,6 +71,25 @@ export function SellPage() {
         icon={<Clock size={26} aria-hidden />}
         title="We are checking your farm"
         description={`${user.vendor.farmName} is being reviewed. Once it is approved you can add produce and buyers will see it. Nothing more is needed from you right now.`}
+      />
+    );
+  }
+
+  if (user.vendor.status === 'rejected') {
+    return (
+      <EmptyState
+        icon={<CircleAlert size={26} aria-hidden />}
+        title="Your farm was not approved"
+        description={
+          user.vendor.reviewNote !== null
+            ? `“${user.vendor.reviewNote}”`
+            : `${user.vendor.farmName} was not approved.`
+        }
+        action={
+          <Link to="/sell/register" className="block">
+            <Button size="lg">Fix my farm details</Button>
+          </Link>
+        }
       />
     );
   }

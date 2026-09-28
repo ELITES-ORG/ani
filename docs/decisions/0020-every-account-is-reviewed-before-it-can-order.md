@@ -1,6 +1,6 @@
 # 0020. Every account is reviewed before it can order
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-09-29
 
 ## Context

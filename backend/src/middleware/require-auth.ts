@@ -43,3 +43,25 @@ export const requireAdmin: RequestHandler = (req, _res, next) => {
   }
   next();
 };
+
+/**
+ * The caller's own account has been approved (ADR 0020).
+ *
+ * Middleware rather than a service check: it is a property of the caller,
+ * like suspension and admin, not of the record being touched, and
+ * requireAuth has already loaded the row. Runs after requireAuth.
+ */
+export const requireApprovedAccount: RequestHandler = (req, _res, next) => {
+  const status = req.user?.approvalStatus;
+  if (status === 'approved') {
+    next();
+    return;
+  }
+  next(
+    AppError.forbidden(
+      status === 'rejected'
+        ? 'Your account was not approved. Update your details to send it for review again.'
+        : 'We are still checking your account. You can do this once it is approved.',
+    ),
+  );
+};

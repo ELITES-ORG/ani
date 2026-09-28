@@ -1,34 +1,65 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useBarangays, useMunicipalities, useRegisterVendor } from '@/features/vendors/api';
+import { useCurrentUser } from '@/features/auth/api';
+import {
+  useBarangays,
+  useMunicipalities,
+  useMyFarm,
+  useRegisterVendor,
+  useUpdateMyFarm,
+} from '@/features/vendors/api';
+import type { OwnFarm } from '@/features/vendors/types';
 import { Button } from '@/components/ui/Button';
 import { ErrorNotice } from '@/components/ui/ErrorNotice';
 import { SelectField, TextField } from '@/components/ui/Field';
+import { Spinner } from '@/components/ui/Spinner';
 
 /**
- * MVP 2 — an existing account registers a farm.
+ * MVP 2 — an existing account registers a farm, or fixes a rejected one and
+ * sends it again (ADR 0011).
  *
  * Barangay is required and is chosen from a list, never typed. It is how a
  * buyer decides whether collecting is realistic, and a free-text field would
  * produce twenty spellings of the same place.
  */
 export function VendorRegisterPage() {
-  const [farmName, setFarmName] = useState('');
-  const [description, setDescription] = useState('');
-  const [municipalitySlug, setMunicipalitySlug] = useState('');
-  const [barangaySlug, setBarangaySlug] = useState('');
-  const [landmark, setLandmark] = useState('');
+  const { data: user, isPending } = useCurrentUser();
+  const resubmitting = user?.vendor?.status === 'rejected';
+  const farm = useMyFarm(resubmitting);
+
+  // Wait for /me: the form is seeded once, so it must know which farm it is.
+  if (isPending) return <Spinner label="Checking your account" />;
+
+  if (!resubmitting) return <FarmForm farm={null} />;
+
+  if (farm.isPending) return <Spinner label="Loading your farm" />;
+  if (farm.isError) return <ErrorNotice error={farm.error} onRetry={() => void farm.refetch()} />;
+  return <FarmForm farm={farm.data} />;
+}
+
+/**
+ * A new farm when `farm` is null; otherwise the rejected farm, prefilled
+ * once. The form holds the owner's draft, not a mirror of the server.
+ */
+function FarmForm({ farm }: { farm: OwnFarm | null }) {
+  const [farmName, setFarmName] = useState(farm?.farmName ?? '');
+  const [description, setDescription] = useState(farm?.description ?? '');
+  const [municipalitySlug, setMunicipalitySlug] = useState(farm?.municipalitySlug ?? '');
+  const [barangaySlug, setBarangaySlug] = useState(farm?.barangaySlug ?? '');
+  const [landmark, setLandmark] = useState(farm?.landmark ?? '');
 
   const municipalities = useMunicipalities();
   const barangays = useBarangays(municipalitySlug === '' ? undefined : municipalitySlug);
   const register = useRegisterVendor();
+  const resubmit = useUpdateMyFarm();
+  const send = farm === null ? register : resubmit;
   const navigate = useNavigate();
 
   return (
     <form
       onSubmit={(event) => {
         event.preventDefault();
-        register.mutate(
+        send.mutate(
           {
             farmName: farmName.trim(),
             municipalitySlug,
@@ -41,9 +72,21 @@ export function VendorRegisterPage() {
       }}
       className="space-y-5"
     >
-      <p className="rounded-card bg-accent-50 px-4 py-3 text-base text-accent-900">
-        We check every farm before its produce goes on the app. You only have to do this once.
-      </p>
+      {farm === null ? (
+        <p className="rounded-card bg-accent-50 px-4 py-3 text-base text-accent-900">
+          We check every farm before its produce goes on the app. You only have to do this once.
+        </p>
+      ) : (
+        <div className="rounded-card border border-danger/20 bg-danger-soft p-4">
+          <p className="font-semibold text-ink">Why it was not approved</p>
+          {farm.reviewNote !== null && (
+            <p className="mt-1 text-base text-ink">“{farm.reviewNote}”</p>
+          )}
+          <p className="mt-1 text-sm text-ink-muted">
+            Fix what it says, then send your farm again. We will check it as soon as we can.
+          </p>
+        </div>
+      )}
 
       <TextField
         label="Farm name"
@@ -116,7 +159,7 @@ export function VendorRegisterPage() {
         />
       </div>
 
-      {register.isError && <ErrorNotice error={register.error} />}
+      {send.isError && <ErrorNotice error={send.error} />}
 
       {/*
         Not disabled until the form is valid. A greyed-out button that does
@@ -128,10 +171,10 @@ export function VendorRegisterPage() {
       <Button
         type="submit"
         size="lg"
-        loading={register.isPending}
+        loading={send.isPending}
         loadingLabel="Sending your details…"
       >
-        Send for review
+        {farm === null ? 'Send for review' : 'Send for review again'}
       </Button>
     </form>
   );

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { Button } from './Button';
 
 interface ConfirmDialogProps {
@@ -6,6 +6,8 @@ interface ConfirmDialogProps {
   title: string;
   /** Say what will happen in plain words, not "are you sure?". */
   description?: string;
+  /** Anything the decision needs, such as a reason, between the words and the buttons. */
+  children?: ReactNode;
   confirmLabel: string;
   /** Shown on the confirm button while the action is running. */
   confirmLoading?: boolean;
@@ -30,6 +32,7 @@ export function ConfirmDialog({
   open,
   title,
   description,
+  children,
   confirmLabel,
   confirmLoading = false,
   confirmLoadingLabel,
@@ -74,6 +77,7 @@ export function ConfirmDialog({
       {description !== undefined && (
         <p className="mt-1.5 text-base text-ink-muted">{description}</p>
       )}
+      {children !== undefined && <div className="mt-4">{children}</div>}
 
       <div className="mt-5 flex flex-col gap-2">
         <Button variant="secondary" onClick={onCancel} disabled={confirmLoading}>

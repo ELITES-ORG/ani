@@ -50,6 +50,9 @@ export const registerBody = z.object({
   email: z.string().trim().email().optional(),
 });
 
+/** Correcting your details before approval. The same rules as registering. */
+export const updateDetailsBody = registerBody.omit({ username: true, password: true });
+
 export const loginBody = z.object({
   username: z.string().trim().min(1).transform((value) => value.toLowerCase()),
   password: z.string().min(1),

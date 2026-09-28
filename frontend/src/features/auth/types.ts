@@ -18,3 +18,6 @@ export interface RegistrationDetails extends Credentials {
   phone: string;
   email?: string;
 }
+
+/** Correcting your details while they are being checked (`PATCH /me`). */
+export type DetailsUpdate = Omit<RegistrationDetails, 'username' | 'password'>;

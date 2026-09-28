@@ -16,6 +16,8 @@ const TITLES: Record<string, string> = {
   '/login': 'Sign in',
   '/register': 'Create an account',
   '/account': 'Your account',
+  '/account/edit': 'Your details',
+  '/admin': 'Review sign-ups',
 };
 
 /**

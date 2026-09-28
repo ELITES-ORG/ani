@@ -83,10 +83,15 @@ It does not replace looking at a real phone.
 
 ## Things that are not commands
 
-**Approving a vendor** is a SQL update until
-[plan 0003](../plans/0003-admin-approval-queue.md) ships:
+**Approving an account or a farm** is done on the admin screen at `/admin`,
+reached from the Account screen as an admin. A new account must be approved
+before it can order or register a farm, and a farm only once its owner is.
+
+For **local use only**, the SQL shortcuts:
 
 ```bash
+docker exec ani-postgres psql -U ani -d ani \
+  -c "update users set approval_status='approved' where username='…';"
 docker exec ani-postgres psql -U ani -d ani \
   -c "update vendors set status='approved' where farm_name='…';"
 ```

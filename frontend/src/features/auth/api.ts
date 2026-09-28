@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient, toApiError } from '@/lib/api-client';
-import type { Credentials, CurrentUser, RegistrationDetails } from './types';
+import { withReviewDefaults, type CurrentUserResponse } from './current-user';
+import type { Credentials, CurrentUser, DetailsUpdate, RegistrationDetails } from './types';
 
 interface ApiResponse<T> {
   data: T;
@@ -21,8 +22,8 @@ export function useCurrentUser() {
     queryKey: authKeys.me,
     queryFn: async (): Promise<CurrentUser | null> => {
       try {
-        const { data } = await apiClient.get<ApiResponse<CurrentUser>>('/me');
-        return data.data;
+        const { data } = await apiClient.get<ApiResponse<CurrentUserResponse>>('/me');
+        return withReviewDefaults(data.data);
       } catch (error) {
         if (
           typeof error === 'object' &&
@@ -45,8 +46,8 @@ export function useLogin() {
   return useMutation({
     mutationFn: async (credentials: Credentials): Promise<CurrentUser> => {
       try {
-        const { data } = await apiClient.post<ApiResponse<CurrentUser>>('/auth/login', credentials);
-        return data.data;
+        const { data } = await apiClient.post<ApiResponse<CurrentUserResponse>>('/auth/login', credentials);
+        return withReviewDefaults(data.data);
       } catch (error) {
         throw toApiError(error);
       }
@@ -60,8 +61,24 @@ export function useRegister() {
   return useMutation({
     mutationFn: async (details: RegistrationDetails): Promise<CurrentUser> => {
       try {
-        const { data } = await apiClient.post<ApiResponse<CurrentUser>>('/auth/register', details);
-        return data.data;
+        const { data } = await apiClient.post<ApiResponse<CurrentUserResponse>>('/auth/register', details);
+        return withReviewDefaults(data.data);
+      } catch (error) {
+        throw toApiError(error);
+      }
+    },
+    onSuccess: (user) => queryClient.setQueryData(authKeys.me, user),
+  });
+}
+
+/** Correct your details while pending, or resubmit them after a rejection. */
+export function useUpdateDetails() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (details: DetailsUpdate): Promise<CurrentUser> => {
+      try {
+        const { data } = await apiClient.patch<ApiResponse<CurrentUserResponse>>('/me', details);
+        return withReviewDefaults(data.data);
       } catch (error) {
         throw toApiError(error);
       }
