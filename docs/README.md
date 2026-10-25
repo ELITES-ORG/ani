@@ -12,6 +12,7 @@ drawer nobody reads twice.
 | [Explanation](./explanation/) | "Why is it shaped like this?" | You're about to change something structural | You understand a constraint others don't |
 | [Decisions](./decisions/) | "Why did we choose this over that?" | You're about to re-litigate a past choice | You make a decision with consequences |
 | [Plans](./plans/) | "How do we build this specific thing?" | You're implementing a planned feature | You're about to build something multi-step |
+| [Handoffs](./handoffs/) | "What exactly does the builder do?" | You are carrying out an issue | An issue is ready to hand to a builder |
 
 The UI design system lives next to the code it governs:
 [`frontend/DESIGN.md`](../frontend/DESIGN.md).
@@ -46,6 +47,8 @@ Different categories rot at different speeds. Treat them accordingly.
   when the conclusion changes.
 - **Plans** are finished, not maintained. A shipped plan is marked Complete and
   left as the record of how that feature was built.
+- **Handoffs** are the build instructions for one issue. A Ready handoff can
+  be executed. A Draft is blocked.
 
 ---
 
@@ -81,3 +84,7 @@ Different categories rot at different speeds. Treat them accordingly.
 **Plans**
 
 - [Plan index](./plans/)
+
+**Handoffs**
+
+- [Handoff index](./handoffs/)
